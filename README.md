@@ -56,3 +56,49 @@ Ce script doit être exécuté sur une installation fraîche ("Fresh Install") d
 1. **Télécharger le script :**
    ```bash
    curl -O [https://raw.githubusercontent.com/VOTRE_USER/VOTRE_REPO/main/citadel_setup.sh](https://raw.githubusercontent.com/VOTRE_USER/VOTRE_REPO/main/citadel_setup.sh)
+    ````
+
+2.  **Rendre le script exécutable :**
+
+    ```bash
+    chmod +x citadel_setup.sh
+    ```
+
+3.  **Lancer l'installation (en root) :**
+
+    ```bash
+    ./citadel_setup.sh
+    ```
+
+4.  **Suivre l'assistant interactif :**
+    Le script vous demandera :
+
+      * Si vous souhaitez créer un nouvel utilisateur administrateur.
+      * Le port SSH à utiliser.
+      * Le nom d'hôte (hostname) de la machine.
+
+## Actions Post-Installation
+
+Une fois le script terminé, il est impératif de suivre ces étapes avant de fermer votre session actuelle :
+
+1.  Ouvrez un **nouveau terminal** sur votre poste local.
+2.  Testez la connexion avec le nouvel utilisateur et le nouveau port :
+    ```bash
+    ssh -p VOTRE_PORT VOTRE_USER@IP_DU_SERVEUR
+    ```
+3.  Si la connexion fonctionne, finalisez l'installation en redémarrant le service SSH ou le serveur depuis la session originale :
+    ```bash
+    systemctl restart sshd
+    # ou
+    reboot
+    ```
+
+## Compatibilité
+
+  * **OS Supportés :** Rocky Linux 9, AlmaLinux 9, Red Hat Enterprise Linux 9.
+  * **Architecture :** x86\_64.
+  * **Environnement :** VPS (OVH, DigitalOcean, etc.), Bare Metal, VM.
+
+## Avertissement
+
+Ce script modifie profondément la configuration système et réseau. Ne l'exécutez pas sur un serveur en production hébergeant déjà des services actifs sans avoir effectué une revue complète du code et des sauvegardes préalables.
