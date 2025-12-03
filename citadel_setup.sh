@@ -4,6 +4,7 @@
 #  PROJECT: CITADEL (GENERAL HARDENING)
 #  TARGET: ROCKY LINUX 9 / RHEL 9
 #  PROFILE: BASE SECURE SERVER (NO DOCKER PRE-INSTALL)
+#  AUTHOR: KuraishY
 # ==============================================================================
 
 # --- COULEURS ---
@@ -55,6 +56,7 @@ echo "  ██║     ██║   ██║   ██╔══██║██║ 
 echo "  ╚██████╗██║   ██║   ██║  ██║██████╔╝███████╗███████╗"
 echo "   ╚═════╝╚═╝   ╚═╝   ╚═╝  ╚═╝╚═════╝ ╚══════╝╚══════╝"
 echo "      >>> UNIVERSAL HARDENING - ROCKY LINUX 9 <<<"
+echo "                 >>> BY KURAISHY <<<"
 echo -e "${NC}"
 
 # ==============================================================================
@@ -62,7 +64,7 @@ echo -e "${NC}"
 # ==============================================================================
 echo -e "\n${BOLD}--- PHASE 1 : CONFIGURATION ---${NC}"
 
-# 1. Gestion Utilisateur (Logique demandée)
+# 1. Gestion Utilisateur (Logique intelligente)
 log_input "Voulez-vous créer un NOUVEL utilisateur admin ? (o/n) : "
 read CREATE_USER_CHOICE
 
@@ -75,7 +77,7 @@ else
     read ADMIN_USER
     DO_CREATE=false
     
-    # Vérification simple
+    # Vérification simple pour éviter de casser le script plus tard
     if ! id "$ADMIN_USER" &>/dev/null; then
         echo -e "${RED}Erreur : L'utilisateur $ADMIN_USER n'existe pas.${NC}"
         exit 1
@@ -103,19 +105,19 @@ echo -e "\n${BOLD}--- PHASE 2 : BASE SYSTÈME ---${NC}"
 # Hostname & Time
 hostnamectl set-hostname "$NEW_HOSTNAME"
 timedatectl set-timezone Europe/Paris
-log_success "Identité définie : $NEW_HOSTNAME"
+log_success "Identité définie : $NEW_HOSTNAME (Europe/Paris)"
 
-# Dépôts (CRB + EPEL sont indispensables pour les outils de sécurité)
+# Dépôts (CRB + EPEL sont indispensables sur Rocky 9)
 log_info "Activation des dépôts CRB & EPEL..."
 dnf config-manager --set-enabled crb >/dev/null 2>&1
 dnf install -y epel-release >/dev/null 2>&1
 
 # Full Update
-log_info "Mise à jour système complète..."
+log_info "Mise à jour système complète (Patience)..."
 (dnf update -y) > /dev/null 2>&1 &
 loading_bar $!
 
-# Installation Outils Admin (Sans Docker)
+# Installation Outils Admin (KuraishY's Arsenal)
 log_info "Installation de l'arsenal d'administration..."
 # Note : firewalld, ipset, audit sont critiques pour la sécurité
 PKGS="vim git curl wget net-tools bind-utils ncdu neofetch dnf-automatic fail2ban tree btop bash-completion firewalld iptables-services iptables-nft ipset audit policycoreutils-python-utils tar man-pages aide rkhunter"
@@ -138,9 +140,8 @@ fi
 # ==============================================================================
 echo -e "\n${BOLD}--- PHASE 3 : HARDENING KERNEL ---${NC}"
 
-# On charge quand même les modules réseaux avancés.
-# Pourquoi ? Si tu installes un VPN, un Firewall complexe ou Docker dans 6 mois,
-# tu n'auras pas d'erreur. Ça ne consomme rien et ça rend la machine "Ready".
+# On charge les modules réseaux avancés pour être "Future Proof"
+# Si tu installes Docker/Podman/VPN plus tard, ça marchera direct.
 log_info "Préparation des modules réseaux (Bridge/Filter)..."
 modprobe overlay br_netfilter ip_tables iptable_nat iptable_filter xt_masquerade
 
@@ -197,7 +198,7 @@ if [ "$DO_CREATE" = true ]; then
         usermod -aG wheel "$ADMIN_USER"
     else
         useradd -m -s /bin/bash "$ADMIN_USER"
-        log_input "Définissez le mot de passe pour $ADMIN_USER : "
+        echo -e "${YELLOW}>>> Définissez le mot de passe pour $ADMIN_USER :${NC}"
         passwd "$ADMIN_USER"
         usermod -aG wheel "$ADMIN_USER"
         log_success "Utilisateur $ADMIN_USER créé."
@@ -229,7 +230,7 @@ sed -i "s/^#\?AllowUsers .*/AllowUsers $ADMIN_USER/" /etc/ssh/sshd_config
 
 # Banner
 echo "-----------------------------------------------------------------" > /etc/issue.net
-echo " WARNING: AUTHORIZED ACCESS ONLY. SYSTEM MONITORED. " >> /etc/issue.net
+echo " WARNING: AUTHORIZED ACCESS ONLY. SYSTEM MONITORED BY CITADEL. " >> /etc/issue.net
 echo "-----------------------------------------------------------------" >> /etc/issue.net
 sed -i "s/^#\?Banner .*/Banner \/etc\/issue.net/" /etc/ssh/sshd_config
 
@@ -300,7 +301,7 @@ BASHRC="/home/$ADMIN_USER/.bashrc"
 if ! grep -q "CITADEL" $BASHRC; then
 cat >> $BASHRC <<EOF
 
-# --- PROJECT CITADEL ---
+# --- PROJECT CITADEL BY KURAISHY ---
 export HISTTIMEFORMAT="%d/%m/%y %T "
 export HISTCONTROL=ignoredups
 
@@ -317,7 +318,7 @@ alias sys='btop'
 alias firewall='sudo firewall-cmd --list-all'
 alias checksec='sudo rkhunter --check --sk'
 
-echo -e "\n\033[1;32m CITADEL SECURE SHELL. \033[0m"
+echo -e "\n\033[1;32m CITADEL SECURE SHELL [Config by KuraishY]. \033[0m"
 EOF
     chown $ADMIN_USER:$ADMIN_USER $BASHRC
 fi
