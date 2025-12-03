@@ -1,39 +1,58 @@
-# Project Vanguard: Rocky Linux 9 Hardening Suite
+# Project Citadel
 
-![Platform](https://img.shields.io/badge/Platform-Rocky%20Linux%209-green)
-![Bash](https://img.shields.io/badge/Language-Bash-blue)
-![Security](https://img.shields.io/badge/Security-Hardened-red)
-![Docker](https://img.shields.io/badge/Docker-Ready-blue)
+**Project Citadel** est une suite d'automatisation en Bash conçue pour le durcissement (hardening) et la préparation de serveurs Rocky Linux 9 et RHEL 9.
 
-**Vanguard** est un script de déploiement et de sécurisation automatisé pour serveurs RHEL 9 / Rocky Linux. Il transforme une installation minimale (type VPS OVH) en un serveur de production sécurisé, auditable et prêt pour la conteneurisation.
+Ce script transforme une installation minimale en un serveur de production sécurisé, auditable et optimisé pour le réseau. Il prépare également le système pour une éventuelle conteneurisation future (Docker/Podman) ou des services VPN en configurant le noyau et le pare-feu en amont, sans installer de paquets superflus.
 
-## Fonctionnalités Clés
+## Objectifs
 
-### Sécurité & Hardening
-* **SSH Blindé :** Port personnalisé, Root login désactivé, Bannière légale, SELinux context aware.
-* **Défense Active :** Fail2Ban (Bantime 24h), Firewalld configuré (Zones strictes).
-* **Intrusion Detection :** AIDE (File Integrity), RKHunter, Auditd (Règles strictes).
-* **Kernel Tuning :** Protection contre IP Spoofing, MITM, SYN Flood, ICMP Redirects.
+L'objectif de Citadel est de fournir un socle de base universel et sécurisé pour tout type de déploiement (Web, Base de données, Applicatif) sur des infrastructures VPS (OVH, Hetzner, AWS, etc.).
 
-### Optimisation Docker
-* Chargement préventif des modules noyau (`overlay`, `br_netfilter`, `iptable_nat`).
-* Correction automatique du conflit Firewalld/Docker (Masquerading activé).
-* Paramétrage `sysctl` pour le forwarding IPv4.
+## Fonctionnalités
 
-### Système & Qualité de Vie
-* **Dépôts :** Activation automatique CRB (CodeReady Builder) et EPEL.
-* **Gestion Swap :** Création automatique de Swap file (2Go) pour éviter l'OOM Killer.
-* **Maintenance :** `dnf-automatic` configuré pour les mises à jour de sécurité.
-* **UX :** Prompt Bash personnalisé, Alias admin, Outils pré-installés (`btop`, `ncdu`, `tree`).
+### 1. Système et Maintenance
+* **Identité :** Configuration du hostname et de la timezone (Europe/Paris).
+* **Dépôts :** Activation automatique des dépôts CRB (CodeReady Builder) et EPEL pour l'accès aux outils d'administration avancés.
+* **Mises à jour :** Mise à jour complète du système et configuration de `dnf-automatic` pour l'application automatique des correctifs de sécurité.
+* **Swap :** Détection et création intelligente d'un fichier Swap de 2 Go si aucun swap n'est présent (protection contre l'OOM Killer).
+
+### 2. Contrôle d'Accès et Identité
+* **Gestion Utilisateur :** Assistant interactif pour la création d'un administrateur dédié ou l'élévation d'un utilisateur existant.
+* **Privilèges :** Configuration du groupe `wheel` pour l'accès sudo.
+
+### 3. Sécurisation SSH (Hardening)
+* **Port :** Changement du port d'écoute par défaut (configurable).
+* **Root :** Désactivation totale de la connexion directe en root (`PermitRootLogin no`).
+* **Paramètres :** Désactivation du X11 Forwarding, limitation des tentatives d'authentification (`MaxAuthTries 3`).
+* **Légal :** Mise en place d'une bannière de connexion légale (`/etc/issue.net`).
+* **SELinux :** Configuration automatique du contexte SELinux pour autoriser le port SSH personnalisé.
+
+### 4. Défense Réseau et Noyau
+* **Firewalld :**
+    * Suppression des services inutiles (cockpit, dhcpv6-client).
+    * Ouverture exclusive du port SSH personnalisé.
+    * Activation du `masquerading` (NAT) par défaut pour assurer la compatibilité future avec Docker, Podman ou des VPN.
+* **Kernel Tuning (sysctl) :**
+    * Protection contre l'IP Spoofing et le Source Routing.
+    * Protection contre les attaques SYN Flood (TCP Hardening).
+    * Ignorance des redirections ICMP (prévention MITM).
+    * Log des paquets suspects (Martians).
+* **Modules Noyau :** Chargement préventif des modules de filtrage et de pont (`br_netfilter`, `overlay`, `iptable_nat`) pour éviter les conflits lors d'installations futures de conteneurs.
+
+### 5. Détection d'Intrusion et Audit
+* **Fail2Ban :** Installation et configuration en mode agressif sur le port SSH personnalisé.
+* **Auditd :** Activation du service d'audit du noyau avec des règles de surveillance sur les fichiers critiques (`/etc/passwd`, `/etc/shadow`, config SSH).
+* **Intégrité des fichiers :** Installation et initialisation de AIDE (Advanced Intrusion Detection Environment) et RKHunter.
+
+### 6. Environnement Administrateur
+* Installation d'un arsenal d'outils CLI : `htop`, `btop`, `ncdu`, `tree`, `git`, `vim`, `wget`, `curl`, `net-tools`.
+* Configuration d'un prompt Bash informatif (Utilisateur, Hôte, Branche Git).
+* Ajout d'alias de maintenance (`update`, `checksec`, `firewall`, `ports`).
 
 ## Installation
 
-```bash
-# 1. Télécharger le script
-wget [https://raw.githubusercontent.com/TON_USER/TON_REPO/main/vanguard_setup.sh](https://raw.githubusercontent.com/TON_USER/TON_REPO/main/vanguard_setup.sh)
+Ce script doit être exécuté sur une installation fraîche ("Fresh Install") de Rocky Linux 9 ou RHEL 9.
 
-# 2. Rendre exécutable
-chmod +x vanguard_setup.sh
-
-# 3. Lancer en root
-./vanguard_setup.sh
+1. **Télécharger le script :**
+   ```bash
+   curl -O [https://raw.githubusercontent.com/VOTRE_USER/VOTRE_REPO/main/citadel_setup.sh](https://raw.githubusercontent.com/VOTRE_USER/VOTRE_REPO/main/citadel_setup.sh)
