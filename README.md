@@ -55,7 +55,7 @@ Ce script doit être exécuté sur une installation fraîche ("Fresh Install") d
 
 1. **Télécharger le script :**
    ```bash
-   curl -O [https://raw.githubusercontent.com/VOTRE_USER/VOTRE_REPO/main/citadel_setup.sh](https://raw.githubusercontent.com/VOTRE_USER/VOTRE_REPO/main/citadel_setup.sh)
+   curl -O [https://raw.githubusercontent.com/4b75726169736859/CITADEL/main/citadel_setup.sh](https://raw.githubusercontent.com/4b75726169736859/CITADEL/main/citadel_setup.sh)
     ````
 
 2.  **Rendre le script exécutable :**
