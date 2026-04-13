@@ -38,7 +38,7 @@ sudo ./citadel_setup.sh
 ```
 
 ### Options du script
-* `--dry-run` : Simule l'exécution de toutes les commandes. Idéal pour voir ce qui sera modifié (fichiers de conf, sysctl, firewall) sans risque.
+`--dry-run` : Simule l'exécution de toutes les commandes. Idéal pour voir ce qui sera modifié (fichiers de conf, sysctl, firewall) sans risque.
 
 ## Fonctionnalités v2.0
 
