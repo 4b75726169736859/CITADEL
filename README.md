@@ -10,6 +10,35 @@
 
 Le script ne fait aucune hypothèse sur l'usage final du serveur : il prépare le noyau, le pare-feu et les modules réseau pour une compatibilité immédiate avec Docker, Podman ou des solutions VPN, sans installer ces outils si vous n'en avez pas besoin.
 
+## Installation & Utilisation
+
+### Prérequis
+* Une installation fraîche de **Rocky Linux 9**, **AlmaLinux 9** ou **RHEL 9**.
+* Un accès **root** (ou via un utilisateur disposant de `sudo`).
+* Une connexion internet active pour le téléchargement des paquets (`epel`, `lynis`, etc.).
+
+### Méthode recommandée
+Pour garantir l'intégrité du script avant exécution, suivez ces étapes :
+
+```bash
+# 1. Télécharger le script
+curl -O https://raw.githubusercontent.com/4b75726169736859/CITADEL/main/citadel_setup.sh
+
+# 2. Rendre le script exécutable
+chmod +x citadel_setup.sh
+
+# 3. (Optionnel mais recommandé) Vérifier le contenu
+# nano citadel_setup.sh
+
+# 4. Lancer la simulation (Dry-Run) pour valider les étapes sans modifier le système
+sudo ./citadel_setup.sh --dry-run
+
+# 5. Exécuter l'installation réelle
+sudo ./citadel_setup.sh
+```
+
+### Options du script
+* `--dry-run` : Simule l'exécution de toutes les commandes. Idéal pour voir ce qui sera modifié (fichiers de conf, sysctl, firewall) sans risque.
 
 ## Fonctionnalités v2.0
 
