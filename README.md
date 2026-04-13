@@ -1,104 +1,197 @@
-# Project Citadel
+# ██████╗██╗████████╗ █████╗ ██████╗ ███████╗██╗
+# ██╔════╝██║╚══██╔══╝██╔══██╗██╔══██╗██╔════╝██║
+# ██║     ██║   ██║   ███████║██║  ██║█████╗  ██║
+# ██║     ██║   ██║   ██╔══██║██║  ██║██╔══╝  ██║
+# ╚██████╗██║   ██║   ██║  ██║██████╔╝███████╗███████╗
+#  ╚═════╝╚═╝   ╚═╝   ╚═╝  ╚═╝╚═════╝ ╚══════╝╚══════╝
 
-**Project Citadel** est une suite d'automatisation en Bash conçue pour le durcissement (hardening) et la préparation de serveurs Rocky Linux 9 et RHEL 9.
+# Project Citadel — v2.0
 
-Ce script transforme une installation minimale en un serveur de production sécurisé, auditable et optimisé pour le réseau. Il prépare également le système pour une éventuelle conteneurisation future (Docker/Podman) ou des services VPN en configurant le noyau et le pare-feu en amont, sans installer de paquets superflus.
+> **Universal Hardening Suite — Rocky Linux 9 / RHEL 9**
+> Transforme une installation minimale en serveur de production sécurisé, auditable et prêt pour la conteneurisation.
 
-## Objectifs
 
-L'objectif de Citadel est de fournir un socle de base universel et sécurisé pour tout type de déploiement (Web, Base de données, Applicatif) sur des infrastructures VPS (OVH, Hetzner, AWS, etc.).
+## Présentation
 
-## Fonctionnalités
+**Project Citadel** est un script de hardening Bash conçu pour Rocky Linux 9 et RHEL 9. En une seule exécution interactive, il configure un socle sécurisé universel adapté à tout type de déploiement : Web, Base de données, Applicatif, ou futur cluster de conteneurs.
 
-### 1. Système et Maintenance
-* **Identité :** Configuration du hostname et de la timezone (Europe/Paris).
-* **Dépôts :** Activation automatique des dépôts CRB (CodeReady Builder) et EPEL pour l'accès aux outils d'administration avancés.
-* **Mises à jour :** Mise à jour complète du système et configuration de `dnf-automatic` pour l'application automatique des correctifs de sécurité.
-* **Swap :** Détection et création intelligente d'un fichier Swap de 2 Go si aucun swap n'est présent (protection contre l'OOM Killer).
+Le script ne fait aucune hypothèse sur l'usage final du serveur : il prépare le noyau, le pare-feu et les modules réseau pour une compatibilité immédiate avec Docker, Podman ou des solutions VPN, sans installer ces outils si vous n'en avez pas besoin.
 
-### 2. Contrôle d'Accès et Identité
-* **Gestion Utilisateur :** Assistant interactif pour la création d'un administrateur dédié ou l'élévation d'un utilisateur existant.
-* **Privilèges :** Configuration du groupe `wheel` pour l'accès sudo.
 
-### 3. Sécurisation SSH (Hardening)
-* **Port :** Changement du port d'écoute par défaut (configurable).
-* **Root :** Désactivation totale de la connexion directe en root (`PermitRootLogin no`).
-* **Paramètres :** Désactivation du X11 Forwarding, limitation des tentatives d'authentification (`MaxAuthTries 3`).
-* **Légal :** Mise en place d'une bannière de connexion légale (`/etc/issue.net`).
-* **SELinux :** Configuration automatique du contexte SELinux pour autoriser le port SSH personnalisé.
+## Fonctionnalités v2.0
 
-### 4. Défense Réseau et Noyau
-* **Firewalld :**
-    * Suppression des services inutiles (cockpit, dhcpv6-client).
-    * Ouverture exclusive du port SSH personnalisé.
-    * Activation du `masquerading` (NAT) par défaut pour assurer la compatibilité future avec Docker, Podman ou des VPN.
-* **Kernel Tuning (sysctl) :**
-    * Protection contre l'IP Spoofing et le Source Routing.
-    * Protection contre les attaques SYN Flood (TCP Hardening).
-    * Ignorance des redirections ICMP (prévention MITM).
-    * Log des paquets suspects (Martians).
-* **Modules Noyau :** Chargement préventif des modules de filtrage et de pont (`br_netfilter`, `overlay`, `iptable_nat`) pour éviter les conflits lors d'installations futures de conteneurs.
+### Système & Maintenance
+| Élément | Détail |
+|---|---|
+| **Identité** | Hostname + timezone Europe/Paris |
+| **Dépôts** | CRB & EPEL activés automatiquement |
+| **Mises à jour** | Full upgrade + `dnf-automatic` (security only) |
+| **Swap** | Création intelligente d'un fichier 2 Go si absent (anti OOM) |
+| **Mode dry-run** | `--dry-run` : simulation complète sans modifier le système |
 
-### 5. Détection d'Intrusion et Audit
-* **Fail2Ban :** Installation et configuration en mode agressif sur le port SSH personnalisé.
-* **Auditd :** Activation du service d'audit du noyau avec des règles de surveillance sur les fichiers critiques (`/etc/passwd`, `/etc/shadow`, config SSH).
-* **Intégrité des fichiers :** Installation et initialisation de AIDE (Advanced Intrusion Detection Environment) et RKHunter.
+### Contrôle d'Accès
+| Élément | Détail |
+|---|---|
+| **Utilisateur** | Création ou élévation d'un admin dédié (groupe `wheel`) |
+| **Validation** | Format Unix strict du nom d'utilisateur vérifié |
+| **Clé SSH** | Déploiement automatique dans `authorized_keys` si fournie |
 
-### 6. Environnement Administrateur
-* Installation d'un arsenal d'outils CLI : `htop`, `btop`, `ncdu`, `tree`, `git`, `vim`, `wget`, `curl`, `net-tools`.
-* Configuration d'un prompt Bash informatif (Utilisateur, Hôte, Branche Git).
-* Ajout d'alias de maintenance (`update`, `checksec`, `firewall`, `ports`).
+### SSH Fortress
+| Paramètre | Valeur |
+|---|---|
+| `Port` | Configurable (validé entre 1025–65535) |
+| `PermitRootLogin` | `no` |
+| `PasswordAuthentication` | `no` si clé fournie, `yes` sinon (avec avertissement) |
+| `AuthenticationMethods` | `publickey` si clé fournie |
+| `MaxAuthTries` | `3` |
+| `X11Forwarding` | `no` |
+| `ClientAliveInterval` | `300` (session kickée après 10 min d'inactivité) |
+| `LoginGraceTime` | `30s` |
+| `PrintLastLog` | `yes` (dernière connexion visible à chaque login) |
+| **Validation** | `sshd -t` exécuté avant tout restart — restauration auto si config invalide |
+
+**MOTD dynamique post-auth** : s'affiche après l'authentification uniquement — entièrement compatible SFTP/SCP/rsync (contrairement à `/etc/issue.net`). Affiche hostname, date, load, mémoire, disque et uptime.
+
+### Hardening Kernel (sysctl)
+
+**Réseau :**
+- Protection IP Spoofing (`rp_filter`)
+- Anti-MITM (ignore redirects ICMP)
+- Anti-SYN Flood (`tcp_syncookies`, backlog 2048)
+- Log des paquets suspects (Martians)
+- Forwarding activé pour compatibilité VPN/containers
+
+**Mémoire & Exploitation :**
+- `kernel.randomize_va_space = 2` — ASLR maximum
+- `fs.suid_dumpable = 0` — Désactive les core dumps SUID (évite les fuites de secrets)
+- `kernel.dmesg_restrict = 1` — `dmesg` réservé à root
+- `kernel.kptr_restrict = 2` — Cache les pointeurs kernel dans `/proc`
+- `fs.protected_hardlinks/symlinks = 1` — Bloque les techniques de privilege escalation via liens
+
+### SELinux
+- Vérifie l'état au runtime
+- Force `SELINUX=enforcing` dans `/etc/selinux/config` si non configuré
+- Contexte SELinux ajusté automatiquement pour le port SSH personnalisé
+
+### Défense Réseau
+| Élément | Détail |
+|---|---|
+| **Zone par défaut** | `drop` — les paquets non autorisés sont silencieusement ignorés (pas de RST, invisible aux scanners) |
+| **Port SSH** | Seul port explicitement ouvert |
+| **Rate-limit SSH** | Max 10 nouvelles connexions/minute par IP (firewall, en amont de Fail2Ban) |
+| **Masquerade** | Activé par défaut (compatibilité Docker/VPN futur) |
+| **Fail2Ban** | Mode agressif, ban 1h, max 3 tentatives en 10 min |
+
+### Audit & Surveillance
+**Auditd — Règles surveillées :**
+- `/etc/passwd`, `/etc/shadow`, `/etc/group` (modifications d'identité)
+- `/etc/sudoers` et `/etc/sudoers.d/` (escalade de privilèges)
+- `/etc/ssh/sshd_config` (modifications de config SSH)
+- Tous les crontabs (`/etc/cron.*`, `/var/spool/cron`) — détection de persistance
+- **Toutes les exécutions avec `euid=0`** (`execve` root) — détection lateral movement
+
+**AIDE :**
+- Base d'intégrité initialisée à l'installation (`aide --init`)
+- Cron hebdomadaire automatique (lundi 3h00) → log dans `/var/log/aide_check.log`
+
+**RKHunter + Lynis :**
+- RKHunter mis à jour et prêt
+- Lynis installé pour les audits ponctuels de conformité (`sudo lynis audit system`)
+
+### Environnement Administrateur
+- Arsenal CLI : `btop`, `ncdu`, `tree`, `git`, `vim`, `wget`, `curl`, `net-tools`, `bind-utils`
+- Prompt Bash coloré (user, host, path)
+- Historique étendu (10 000 lignes, horodaté, sans doublons)
+- **Aliases :**
+
+```bash
+alias update    # dnf update -y
+alias ll        # ls détaillé + couleurs
+alias ports     # netstat -tulanp
+alias myip      # curl ifconfig.me
+alias sys       # btop
+alias firewall  # firewall-cmd --list-all
+alias checksec  # rkhunter --check
+alias audit     # lynis audit system
+alias aidechk   # aide --check
+```
 
 ## Installation
 
-Ce script doit être exécuté sur une installation fraîche ("Fresh Install") de Rocky Linux 9 ou RHEL 9.
+> ⚠️ **Prérequis :** Installation fraîche de Rocky Linux 9 / RHEL 9. Ne pas exécuter sur un serveur en production sans revue préalable du code.
 
-1. **Télécharger le script :**
-   ```bash
-   curl -O https://raw.githubusercontent.com/4b75726169736859/CITADEL/main/citadel_setup.sh
-    ````
+```bash
+# 1. Télécharger
+curl -O https://raw.githubusercontent.com/4b75726169736859/CITADEL/main/citadel_setup.sh
 
-2.  **Rendre le script exécutable :**
+# 2. Rendre exécutable
+chmod +x citadel_setup.sh
 
-    ```bash
-    chmod +x citadel_setup.sh
-    ```
+# 3. Lancer (en root)
+./citadel_setup.sh
 
-3.  **Lancer l'installation (en root) :**
+# 3b. Mode simulation (aucune modification)
+./citadel_setup.sh --dry-run
+```
 
-    ```bash
-    ./citadel_setup.sh
-    ```
+### Assistant interactif
 
-4.  **Suivre l'assistant interactif :**
-    Le script vous demandera :
+Le script vous demandera :
 
-      * Si vous souhaitez créer un nouvel utilisateur administrateur.
-      * Le port SSH à utiliser.
-      * Le nom d'hôte (hostname) de la machine.
+1. Créer un nouvel utilisateur ou élever un existant
+2. Nom de l'utilisateur admin
+3. Votre clé SSH publique *(optionnel — désactive l'auth par mot de passe si fournie)*
+4. Port SSH personnalisé (1025–65535)
+5. Hostname de la machine
+
 
 ## Actions Post-Installation
 
-Une fois le script terminé, il est impératif de suivre ces étapes avant de fermer votre session actuelle :
+> ⚠️ **Ne fermez pas votre session actuelle avant d'avoir testé la connexion.**
 
-1.  Ouvrez un **nouveau terminal** sur votre poste local.
-2.  Testez la connexion avec le nouvel utilisateur et le nouveau port :
-    ```bash
-    ssh -p VOTRE_PORT VOTRE_USER@IP_DU_SERVEUR
-    ```
-3.  Si la connexion fonctionne, finalisez l'installation en redémarrant le service SSH ou le serveur depuis la session originale :
-    ```bash
-    systemctl restart sshd
-    # ou
-    reboot
-    ```
+```bash
+# Depuis un NOUVEAU terminal sur votre poste local
+ssh -p VOTRE_PORT VOTRE_USER@IP_DU_SERVEUR
+
+# Si la connexion fonctionne, finalisez depuis la session d'origine
+systemctl restart sshd && reboot
+```
+
+
+## Commandes de référence post-déploiement
+
+```bash
+# Audit de conformité complet
+sudo lynis audit system
+
+# Vérifier l'intégrité des fichiers (AIDE)
+sudo aide --check
+
+# Consulter les exécutions root auditées
+sudo ausearch -k root_exec
+
+# Status Fail2Ban
+sudo fail2ban-client status sshd
+
+# Débloquer une IP bannie
+sudo fail2ban-client set sshd unbanip <IP>
+
+# Voir les règles firewall actives
+sudo firewall-cmd --list-all --zone=drop
+```
 
 ## Compatibilité
 
-  * **OS Supportés :** Rocky Linux 9, AlmaLinux 9, Red Hat Enterprise Linux 9.
-  * **Architecture :** x86\_64.
-  * **Environnement :** VPS (OVH, DigitalOcean, etc.), Bare Metal, VM.
+| Critère | Valeur |
+|---|---|
+| **OS** | Rocky Linux 9, AlmaLinux 9, RHEL 9 |
+| **Architecture** | x86_64 |
+| **Environnement** | VPS (OVH, Hetzner, AWS, DigitalOcean…), Bare Metal, VM |
+
 
 ## Avertissement
 
-Ce script modifie profondément la configuration système et réseau. Ne l'exécutez pas sur un serveur en production hébergeant déjà des services actifs sans avoir effectué une revue complète du code et des sauvegardes préalables.
+Ce script modifie profondément la configuration système, réseau et de sécurité. Testez-le dans un environnement de staging avant tout déploiement en production. L'auteur décline toute responsabilité en cas de perte d'accès ou de dysfonctionnement suite à une utilisation incorrecte.
+
+
+*Project Citadel — by [4b75726169736859](https://github.com/4b75726169736859)*
