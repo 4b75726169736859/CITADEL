@@ -4,7 +4,7 @@
 #  PROJECT: CITADEL (GENERAL HARDENING)
 #  TARGET: ROCKY LINUX 9 / RHEL 9
 #  PROFILE: BASE SECURE SERVER (NO DOCKER PRE-INSTALL)
-#  AUTHOR: KuraishY
+#  AUTHOR: 4b75726169736859
 # ==============================================================================
 
 # --- COULEURS ---
@@ -56,7 +56,7 @@ echo "  ██║     ██║   ██║   ██╔══██║██║ 
 echo "  ╚██████╗██║   ██║   ██║  ██║██████╔╝███████╗███████╗"
 echo "   ╚═════╝╚═╝   ╚═╝   ╚═╝  ╚═╝╚═════╝ ╚══════╝╚══════╝"
 echo "      >>> UNIVERSAL HARDENING - ROCKY LINUX 9 <<<"
-echo "                 >>> BY KURAISHY <<<"
+echo "                 >>> BY 4b75726169736859 <<<"
 echo -e "${NC}"
 
 # ==============================================================================
@@ -232,7 +232,7 @@ sed -i "s/^#\?AllowUsers .*/AllowUsers $ADMIN_USER/" /etc/ssh/sshd_config
 echo "-----------------------------------------------------------------" > /etc/issue.net
 echo " WARNING: AUTHORIZED ACCESS ONLY. SYSTEM MONITORED BY CITADEL. " >> /etc/issue.net
 echo "-----------------------------------------------------------------" >> /etc/issue.net
-sed -i "s/^#\?Banner .*/Banner \/etc\/issue.net/" /etc/ssh/sshd_config
+# sed -i "s/^#\?Banner .*/Banner \/etc\/issue.net/" /etc/ssh/sshd_config
 
 log_success "SSH sécurisé (Port $SSH_PORT)."
 
@@ -251,8 +251,6 @@ firewall-cmd --permanent --zone=public --remove-service=cockpit >/dev/null 2>&1
 firewall-cmd --permanent --zone=public --add-port=$SSH_PORT/tcp
 
 # On active le Masquerade par défaut.
-# C'est une bonne pratique "Générale" sur un VPS : ça permet à n'importe quel 
-# service interne (VPN, Docker futur, Podman) d'accéder au net sans config complexe.
 firewall-cmd --permanent --zone=public --add-masquerade
 
 firewall-cmd --reload >/dev/null 2>&1
@@ -317,8 +315,6 @@ alias myip='curl -s ifconfig.me'
 alias sys='btop'
 alias firewall='sudo firewall-cmd --list-all'
 alias checksec='sudo rkhunter --check --sk'
-
-echo -e "\n\033[1;32m CITADEL SECURE SHELL [Config by KuraishY]. \033[0m"
 EOF
     chown $ADMIN_USER:$ADMIN_USER $BASHRC
 fi
