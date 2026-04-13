@@ -1,6 +1,6 @@
-# Project Citadel — v2.0
+# Project Citadel - v2.0
 
-> **Universal Hardening Suite — Rocky Linux 9 / RHEL 9**
+> **Universal Hardening Suite - Rocky Linux 9 / RHEL 9**
 > Transforme une installation minimale en serveur de production sécurisé, auditable et prêt pour la conteneurisation.
 
 
@@ -41,9 +41,9 @@ Le script ne fait aucune hypothèse sur l'usage final du serveur : il prépare l
 | `ClientAliveInterval` | `300` (session kickée après 10 min d'inactivité) |
 | `LoginGraceTime` | `30s` |
 | `PrintLastLog` | `yes` (dernière connexion visible à chaque login) |
-| **Validation** | `sshd -t` exécuté avant tout restart — restauration auto si config invalide |
+| **Validation** | `sshd -t` exécuté avant tout restart - restauration auto si config invalide |
 
-**MOTD dynamique post-auth** : s'affiche après l'authentification uniquement — entièrement compatible SFTP/SCP/rsync (contrairement à `/etc/issue.net`). Affiche hostname, date, load, mémoire, disque et uptime.
+**MOTD dynamique post-auth** : s'affiche après l'authentification uniquement - entièrement compatible SFTP/SCP/rsync (contrairement à `/etc/issue.net`). Affiche hostname, date, load, mémoire, disque et uptime.
 
 ### Hardening Kernel (sysctl)
 
@@ -55,11 +55,11 @@ Le script ne fait aucune hypothèse sur l'usage final du serveur : il prépare l
 - Forwarding activé pour compatibilité VPN/containers
 
 **Mémoire & Exploitation :**
-- `kernel.randomize_va_space = 2` — ASLR maximum
-- `fs.suid_dumpable = 0` — Désactive les core dumps SUID (évite les fuites de secrets)
-- `kernel.dmesg_restrict = 1` — `dmesg` réservé à root
-- `kernel.kptr_restrict = 2` — Cache les pointeurs kernel dans `/proc`
-- `fs.protected_hardlinks/symlinks = 1` — Bloque les techniques de privilege escalation via liens
+- `kernel.randomize_va_space = 2` - ASLR maximum
+- `fs.suid_dumpable = 0` - Désactive les core dumps SUID (évite les fuites de secrets)
+- `kernel.dmesg_restrict = 1` - `dmesg` réservé à root
+- `kernel.kptr_restrict = 2` - Cache les pointeurs kernel dans `/proc`
+- `fs.protected_hardlinks/symlinks = 1` - Bloque les techniques de privilege escalation via liens
 
 ### SELinux
 - Vérifie l'état au runtime
@@ -69,19 +69,19 @@ Le script ne fait aucune hypothèse sur l'usage final du serveur : il prépare l
 ### Défense Réseau
 | Élément | Détail |
 |---|---|
-| **Zone par défaut** | `drop` — les paquets non autorisés sont silencieusement ignorés (pas de RST, invisible aux scanners) |
+| **Zone par défaut** | `drop` - les paquets non autorisés sont silencieusement ignorés (pas de RST, invisible aux scanners) |
 | **Port SSH** | Seul port explicitement ouvert |
 | **Rate-limit SSH** | Max 10 nouvelles connexions/minute par IP (firewall, en amont de Fail2Ban) |
 | **Masquerade** | Activé par défaut (compatibilité Docker/VPN futur) |
 | **Fail2Ban** | Mode agressif, ban 1h, max 3 tentatives en 10 min |
 
 ### Audit & Surveillance
-**Auditd — Règles surveillées :**
+**Auditd - Règles surveillées :**
 - `/etc/passwd`, `/etc/shadow`, `/etc/group` (modifications d'identité)
 - `/etc/sudoers` et `/etc/sudoers.d/` (escalade de privilèges)
 - `/etc/ssh/sshd_config` (modifications de config SSH)
-- Tous les crontabs (`/etc/cron.*`, `/var/spool/cron`) — détection de persistance
-- **Toutes les exécutions avec `euid=0`** (`execve` root) — détection lateral movement
+- Tous les crontabs (`/etc/cron.*`, `/var/spool/cron`) - détection de persistance
+- **Toutes les exécutions avec `euid=0`** (`execve` root) - détection lateral movement
 
 **AIDE :**
 - Base d'intégrité initialisée à l'installation (`aide --init`)
@@ -133,7 +133,7 @@ Le script vous demandera :
 
 1. Créer un nouvel utilisateur ou élever un existant
 2. Nom de l'utilisateur admin
-3. Votre clé SSH publique *(optionnel — désactive l'auth par mot de passe si fournie)*
+3. Votre clé SSH publique *(optionnel - désactive l'auth par mot de passe si fournie)*
 4. Port SSH personnalisé (1025–65535)
 5. Hostname de la machine
 
@@ -187,4 +187,4 @@ sudo firewall-cmd --list-all --zone=drop
 Ce script modifie profondément la configuration système, réseau et de sécurité. Testez-le dans un environnement de staging avant tout déploiement en production. L'auteur décline toute responsabilité en cas de perte d'accès ou de dysfonctionnement suite à une utilisation incorrecte.
 
 
-*Project Citadel — by [4b75726169736859](https://github.com/4b75726169736859)*
+*Project Citadel - by [4b75726169736859](https://github.com/4b75726169736859)*
