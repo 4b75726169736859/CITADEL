@@ -1,7 +1,6 @@
-# Project CITADEL - v3.0
+# CITADEL - v3.0
 
 > **Ultra Hardening Framework - Rocky Linux 9 / RHEL 9 / AlmaLinux 9**
-> 2167 lignes. Une exécution. Un serveur blindé.
 
 ##  CHANGELOG v3.0 (vs v2.0):
 >SÉCURITÉ
