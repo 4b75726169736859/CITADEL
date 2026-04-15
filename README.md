@@ -3,46 +3,46 @@
 > **Ultra Hardening Framework — Rocky Linux 9 / RHEL 9 / AlmaLinux 9**
 > 2167 lignes. Une exécution. Un serveur blindé.
 
-#  CHANGELOG v3.0 (vs v2.0):
-#    SÉCURITÉ
-#    + SSH: algorithmes crypto modernes uniquement (ChaCha20/AES-GCM/ed25519)
-#    + SSH: bannière légale + AllowUsers strict + MaxStartups + TCPKeepAlive
-#    + Kernel: SMEP/SMAP/KPTI/Spectre mitigations via sysctl
-#    + Kernel: désactivation modules dangereux (usb-storage, firewire, cramfs…)
-#    + PAM: faillock, umask 027, su restreint au groupe wheel
-#    + Sudo: logfile dédié, timeout 5 min, NOPASSWD interdit
-#    + Auditd: 30+ règles (CIS Level 2, PCI-DSS, STIG)
-#    + Syslog: forwarding vers fichier sécurisé + rotation
-#    + GRUB: mot de passe hash bcrypt + timeout 3s
-#    + Chronyd: NTP sécurisé multi-sources
-#    + Systemd: services inutiles désactivés (38 services)
-#    + Réseau: IPv6 désactivé sauf si explicitement demandé
-#    + /tmp: monté noexec,nosuid,nodev
-#    + /proc: hidepid=2 (isolation des processus)
-#    + Sécurisation /etc/sysconfig/network scripts
-#    + ClamAV installé + scan quotidien
-#    + Tripwire/AIDE: baseline + vérif hebdo + alertes
-#    + rkhunter: check quotidien + mise à jour
+##  CHANGELOG v3.0 (vs v2.0):
+>SÉCURITÉ
+>+ SSH: algorithmes crypto modernes uniquement (ChaCha20/AES-GCM/ed25519)
+>+ SSH: bannière légale + AllowUsers strict + MaxStartups + TCPKeepAlive
+>+ Kernel: SMEP/SMAP/KPTI/Spectre mitigations via sysctl
+>+ Kernel: désactivation modules dangereux (usb-storage, firewire, cramfs…)
+>+ PAM: faillock, umask 027, su restreint au groupe wheel
+>+ Sudo: logfile dédié, timeout 5 min, NOPASSWD interdit
+>+ Auditd: 30+ règles (CIS Level 2, PCI-DSS, STIG)
+>+ Syslog: forwarding vers fichier sécurisé + rotation
+>+ GRUB: mot de passe hash bcrypt + timeout 3s
+>+ Chronyd: NTP sécurisé multi-sources
+>+ Systemd: services inutiles désactivés (38 services)
+>+ Réseau: IPv6 désactivé sauf si explicitement demandé
+>+ /tmp: monté noexec,nosuid,nodev
+>+ /proc: hidepid=2 (isolation des processus)
+>+ Sécurisation /etc/sysconfig/network scripts
+>+ ClamAV installé + scan quotidien
+>+ Tripwire/AIDE: baseline + vérif hebdo + alertes
+>+ rkhunter: check quotidien + mise à jour
 #
-#    MONITORING & LOGS
-#    + MOTD enrichi: CPU, RAM, disque, derniers logins, IP
-#    + Journald: persistent storage + compression
-#    + Logwatch: rapport quotidien par email
-#    + Rapport HTML post-install généré localement
-#    + Colorisation complète des outputs
+>MONITORING & LOGS
+>+ MOTD enrichi: CPU, RAM, disque, derniers logins, IP
+>+ Journald: persistent storage + compression
+>+ Logwatch: rapport quotidien par email
+>+ Rapport HTML post-install généré localement
+>+ Colorisation complète des outputs
 #
-#    UX & ROBUSTESSE
-#    + Menu interactif multi-phases avec progression
-#    + --dry-run amélioré (preview complet)
-#    + --check-only: audit sans modification
-#    + --restore: restauration depuis backup
-#    + Backup automatique de TOUS les fichiers modifiés
-#    + Détection distro/version automatique
-#    + Validation stricte de tous les inputs (regex + range)
-#    + Gestion d'erreurs: rollback automatique sur échec critique
-#    + Idempotence totale (relançable sans casse)
-#    + Rapport final JSON + HTML + texte
-#    + Estimation durée + barre de progression ASCII
+>UX & ROBUSTESSE
+>+ Menu interactif multi-phases avec progression
+>+ --dry-run amélioré (preview complet)
+>+ --check-only: audit sans modification
+>+ --restore: restauration depuis backup
+>+ Backup automatique de TOUS les fichiers modifiés
+>+ Détection distro/version automatique
+>+ Validation stricte de tous les inputs (regex + range)
+>+ Gestion d'erreurs: rollback automatique sur échec critique
+>+ Idempotence totale (relançable sans casse)
+>+ Rapport final JSON + HTML + texte
+>+ Estimation durée + barre de progression ASCII
 
 ## Présentation
 
