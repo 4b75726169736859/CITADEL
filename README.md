@@ -1,53 +1,64 @@
-# CITADEL - v3.0
+# CITADEL - v4.0
 
 > **Ultra Hardening Framework - Rocky Linux 9 / RHEL 9 / AlmaLinux 9**
 
-##  CHANGELOG v3.0 (vs v2.0 ):
->SÉCURITÉ
->+ SSH: algorithmes crypto modernes uniquement (ChaCha20/AES-GCM/ed25519)
->+ SSH: bannière légale + AllowUsers strict + MaxStartups + TCPKeepAlive
->+ Kernel: SMEP/SMAP/KPTI/Spectre mitigations via sysctl
->+ Kernel: désactivation modules dangereux (usb-storage, firewire, cramfs...)
->+ PAM: faillock, umask 027, su restreint au groupe wheel
->+ Sudo: logfile dédié, timeout 5 min, NOPASSWD interdit
->+ Auditd: 30+ règles (CIS Level 2, PCI-DSS, STIG)
->+ Syslog: forwarding vers fichier sécurisé + rotation
->+ GRUB: mot de passe hash bcrypt + timeout 3s
->+ Chronyd: NTP sécurisé multi-sources
->+ Systemd: services inutiles désactivés (38 services)
->+ Réseau: IPv6 désactivé sauf si explicitement demandé
->+ /tmp: monté noexec,nosuid,nodev
->+ /proc: hidepid=2 (isolation des processus)
->+ Sécurisation /etc/sysconfig/network scripts
->+ ClamAV installé + scan quotidien
->+ Tripwire/AIDE: baseline + vérif hebdo + alertes
->+ rkhunter: check quotidien + mise à jour
+##  CHANGELOG v4.0 (notable additions vs v4.0) :
+>Noyau & boot
+>+ Lockdown mode (integrity) via paramètre kernel lockdown=integrity
+>+ Désactivation complète de kdump (les dumps mémoire = secrets en clair)
+>+ Vérification signature des modules (module.sig_enforce=1)
+>+ Anti-DMA attacks : iommu=force + intel_iommu=on si supporté
 #
->MONITORING & LOGS
->+ MOTD enrichi: CPU, RAM, disque, derniers logins, IP
->+ Journald: persistent storage + compression
->+ Logwatch: rapport quotidien par email
->+ Rapport HTML post-install généré localement
->+ Colorisation complète des outputs
+>Réseau
+>+ Règles nftables IPv4 + IPv6 (deux tables séparées, policy DROP sur 6)
+>+ Bug fix : rate-limit SSH via `meter` (ancienne syntaxe v3 cassée)
+>+ Port-knocking optionnel (3 ports séquentiels avant SSH)
+>+ DNS-over-TLS via systemd-resolved (Cloudflare 1.1.1.1 + Quad9)
+>+ DNSSEC validation activée par défaut
+>+ Anti-spoofing renforcé (strict RP filter + source validation)
 #
->UX & ROBUSTESSE
->+ Menu interactif multi-phases avec progression
->+ --dry-run amélioré (preview complet)
->+ --check-only: audit sans modification
->+ --restore: restauration depuis backup
->+ Backup automatique de TOUS les fichiers modifiés
->+ Détection distro/version automatique
->+ Validation stricte de tous les inputs (regex + range)
->+ Gestion d'erreurs: rollback automatique sur échec critique
->+ Idempotence totale (relançable sans casse)
->+ Rapport final JSON + HTML + texte
->+ Estimation durée + barre de progression ASCII
+>Authentification & utilisateurs
+>+ USBGuard : whitelist des périphériques USB connus (anti rubber-ducky)
+>+ Session recording (tlog) optionnel pour les comptes wheel
+>+ Password aging via chage (PASS_MAX_DAYS=90, WARN=14, MIN=7)
+>+ cron.allow + at.allow : restriction au groupe wheel uniquement
+>+ Bannières légales sur /etc/issue, /etc/issue.net, MOTD pré-login
+>+ PAM : ajout pam_tty_audit pour tracer les actions root en TTY
+#
+>Intégrité & détection
+>+ chattr +i sur fichiers critiques (passwd, shadow, sudoers…)
+>+ Process accounting (psacct) : toutes les commandes root tracées
+>+ Systemd service hardening : NoNewPrivileges=yes, ProtectSystem=strict… sur auditd, chronyd, fail2ban, sshd, nftables (overrides drop-in)
+>+ Intégration OpenSCAP : scan CIS automatique post-install + cron mensuel
+>+ Self-test suite (--self-test) : ~60 contrôles unitaires
+#
+>Sauvegarde & reprise
+>+ Snapshot LVM automatique avant install (si /root est sur LVM)
+>+ Mode --uninstall : annule la totalité des changements CITADEL
+>+ Mode --restore amélioré : sélection interactive par phase
+>+ Rapport final triple : TXT + HTML (stylé) + JSON (parsable)
+#
+>UX
+>+ Flag --phases=X,Y,Z pour exécuter uniquement certaines phases
+>+ Flag --compliance=cis|anssi|stig pour profils pré-définis
+>+ Estimation durée par phase (affichée avant confirmation)
+>+ Progression globale en pourcentage
+#
+>Corrections de bugs v3
+>+ nftables : rule rate-limit SSH corrigée (meter + update @set)
+>+ systemd : `list-unit-files` ne marchait pas à cause du pipe
+>+ sudoers : Defaults !shell_noesc retiré (option inexistante)
+>+ dnf-automatic : emit_via = email au lieu de = stdio (boucle)
+>+ MOTD : dnf check-update retiré (lenteur + hit repo à chaque login)
+>+ SSH host key regen : ssh-keygen -y bash-friendly (plus de heredoc)
+>+ AIDE : cron.daily au lieu de weekly-only pour meilleure détection
+>+ Faillock : ajout de even_deny_root + root_unlock_time
 
 ## Présentation
 
 **Project CITADEL** est un tools de hardening Bash pour Rocky Linux 9, RHEL 9 et AlmaLinux 9. En une seule exécution interactive, il transforme une installation minimale en serveur de production durci, auditable et conforme aux standards **CIS Benchmark Level 2**, **PCI-DSS** et **STIG**.
 
-La v3.0 est une réécriture complète :
+La v4.0 est une réécriture complète :
 
 - nftables natif
 - crypto SSH moderne uniquement
@@ -383,4 +394,4 @@ sudo ./citadel.sh --restore
 Ce script modifie profondément la configuration système, réseau et de sécurité. Testez-le dans un environnement de staging avant tout déploiement en production. L'auteur décline toute responsabilité en cas de perte d'accès ou de dysfonctionnement suite à une utilisation incorrecte.
 
 
-*Project CITADEL v3.0 - by [4b75726169736859](https://github.com/4b75726169736859)*
+*Project CITADEL v4.0 - by [4b75726169736859](https://github.com/4b75726169736859)*
