@@ -74,7 +74,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # ==============================================================================
-# SECTION 0 — Constantes & config globale
+# SECTION 0 - Constantes & config globale
 # ==============================================================================
 
 readonly CITADEL_VERSION='4.0'
@@ -157,7 +157,7 @@ declare -A PHASES=(
     [openscap]='setup_compliance_scan'
 )
 
-# Ordre d'exécution (important — certaines phases dépendent d'autres)
+# Ordre d'exécution (important - certaines phases dépendent d'autres)
 readonly PHASES_ORDER=(
     base kernel mounts selinux users ssh firewall auditd services
     aide rkhunter clamav grub syslog userenv
@@ -177,13 +177,13 @@ declare -A PHASE_ETA=(
 )
 
 # ==============================================================================
-# SECTION 1 — Parsing des arguments
+# SECTION 1 - Parsing des arguments
 # ==============================================================================
 
 usage() {
     cat <<EOF
 
-${BOLD}CITADEL v${CITADEL_VERSION}${NC} — Framework de hardening Rocky/RHEL/Alma 9
+${BOLD}CITADEL v${CITADEL_VERSION}${NC} - Framework de hardening Rocky/RHEL/Alma 9
 
 ${W}USAGE${NC}
   citadel.sh [options]
@@ -263,7 +263,7 @@ case "$COMPLIANCE_PROFILE" in
 esac
 
 # ==============================================================================
-# SECTION 2 — Fonctions utilitaires core
+# SECTION 2 - Fonctions utilitaires core
 # ==============================================================================
 
 _log() {
@@ -308,7 +308,7 @@ run_interactive() {
     eval "$@"
 }
 
-# Backup d'un fichier avant modification — idempotent (même backup = 1 seul)
+# Backup d'un fichier avant modification - idempotent (même backup = 1 seul)
 backup_file() {
     local file="$1"
     [ -f "$file" ] || return 0
@@ -327,7 +327,7 @@ state_add() {
     echo "$(date -Iseconds)|$*" >> "$STATE_FILE"
 }
 
-# Spinner compact (on garde les braille — ça rend bien en prod)
+# Spinner compact (on garde les braille - ça rend bien en prod)
 spinner() {
     local label="$1" pid="$2"
     local frames='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
@@ -405,7 +405,7 @@ get_local_ip() {
 }
 
 # ==============================================================================
-# SECTION 3 — Pré-checks système
+# SECTION 3 - Pré-checks système
 # ==============================================================================
 
 precheck() {
@@ -436,7 +436,7 @@ precheck() {
 
     # Détection distro via os-release
     if [ ! -r /etc/os-release ]; then
-        log_error "/etc/os-release introuvable — détection distro impossible."
+        log_error "/etc/os-release introuvable - détection distro impossible."
         exit 1
     fi
     # shellcheck source=/dev/null
@@ -450,7 +450,7 @@ precheck() {
             log_info "Distribution : $DISTRO_NAME $DISTRO_VERSION (supportée)"
             ;;
         ol|oracle)
-            log_warn "Oracle Linux détecté — support expérimental, certains paquets EPEL peuvent manquer."
+            log_warn "Oracle Linux détecté - support expérimental, certains paquets EPEL peuvent manquer."
             ;;
         *)
             log_warn "Distribution non testée : $DISTRO_NAME"
@@ -477,7 +477,7 @@ precheck() {
     local ram_mb
     ram_mb=$(free -m | awk '/^Mem/{print $2}')
     if [[ "$ram_mb" -lt 768 ]]; then
-        log_warn "RAM : ${ram_mb} Mo — scans ClamAV/AIDE peuvent être lents."
+        log_warn "RAM : ${ram_mb} Mo - scans ClamAV/AIDE peuvent être lents."
     fi
 
     # Connectivité (on teste 2 cibles pour éviter un faux négatif)
@@ -485,13 +485,13 @@ precheck() {
     for target in 1.1.1.1 8.8.8.8; do
         ping -c1 -W2 "$target" &>/dev/null && { online=true; break; }
     done
-    [ "$online" = false ] && log_warn "Aucune connectivité détectée — l'install peut échouer."
+    [ "$online" = false ] && log_warn "Aucune connectivité détectée - l'install peut échouer."
 
     # Virtualisation : avertissement si conteneur (certains syscalls bloqués)
     local virt
     virt="$(systemd-detect-virt 2>/dev/null || echo 'none')"
     if [[ "$virt" =~ ^(lxc|docker|openvz|systemd-nspawn)$ ]]; then
-        log_warn "Environnement conteneurisé détecté ($virt) — certaines phases noyau seront inopérantes."
+        log_warn "Environnement conteneurisé détecté ($virt) - certaines phases noyau seront inopérantes."
     elif [ "$virt" != 'none' ]; then
         log_info "Virtualisation détectée : $virt"
     fi
@@ -510,7 +510,7 @@ precheck() {
     install -d -m 0750 "$REPORT_DIR"
     touch "$STATE_FILE" && chmod 0600 "$STATE_FILE"
 
-    log_success "Pré-checks terminés — distro: ${DISTRO_NAME} ${DISTRO_VERSION}, arch: ${arch}, virt: ${virt}"
+    log_success "Pré-checks terminés - distro: ${DISTRO_NAME} ${DISTRO_VERSION}, arch: ${arch}, virt: ${virt}"
 }
 
 # ------------------------------------------------------------------------------
@@ -521,14 +521,14 @@ create_pre_install_snapshot() {
     [ "$DRY_RUN" = true ] && return 0
 
     if ! cmd_exists lvs; then
-        log_debug "LVM non disponible — pas de snapshot possible."
+        log_debug "LVM non disponible - pas de snapshot possible."
         return 0
     fi
 
     # Détecter le LV qui porte /
     local root_src root_lv root_vg
     root_src="$(findmnt -n -o SOURCE /)"
-    [[ "$root_src" =~ /dev/mapper/ ]] || { log_debug "Racine non LVM — snapshot ignoré."; return 0; }
+    [[ "$root_src" =~ /dev/mapper/ ]] || { log_debug "Racine non LVM - snapshot ignoré."; return 0; }
 
     root_lv="$(basename "$root_src")"
     root_vg="$(lvs --noheadings -o vg_name "$root_src" 2>/dev/null | xargs || true)"
@@ -538,7 +538,7 @@ create_pre_install_snapshot() {
     local vg_free_gb
     vg_free_gb=$(vgs --noheadings --units g -o vg_free "$root_vg" 2>/dev/null | awk '{print int($1)}')
     if [[ "$vg_free_gb" -lt 2 ]]; then
-        log_warn "VG ${root_vg} — moins de 2 Go libres, snapshot ignoré."
+        log_warn "VG ${root_vg} - moins de 2 Go libres, snapshot ignoré."
         return 0
     fi
 
@@ -548,12 +548,12 @@ create_pre_install_snapshot() {
         state_add "SNAPSHOT:${root_vg}/${snap_name}"
         log_success "Snapshot LVM créé : ${root_vg}/${snap_name}"
     else
-        log_warn "Échec création snapshot — on continue sans."
+        log_warn "Échec création snapshot - on continue sans."
     fi
 }
 
 # ==============================================================================
-# SECTION 4 — Collecte des inputs utilisateur
+# SECTION 4 - Collecte des inputs utilisateur
 # ==============================================================================
 
 collect_inputs() {
@@ -569,7 +569,7 @@ collect_inputs() {
     case "$choice" in
         1) DO_CREATE=true ;;
         2) DO_CREATE=false ;;
-        *) log_warn "Choix invalide — utilisation d'un existant par défaut."; DO_CREATE=false ;;
+        *) log_warn "Choix invalide - utilisation d'un existant par défaut."; DO_CREATE=false ;;
     esac
 
     while true; do
@@ -587,7 +587,7 @@ collect_inputs() {
         # Interdire root / nologin users
         case "$ADMIN_USER" in
             root|daemon|bin|sys|nobody)
-                log_warn "Nom réservé au système — refusé."
+                log_warn "Nom réservé au système - refusé."
                 continue ;;
         esac
 
@@ -596,7 +596,7 @@ collect_inputs() {
             continue
         fi
         if [ "$DO_CREATE" = true ] && id "$ADMIN_USER" &>/dev/null; then
-            log_warn "'$ADMIN_USER' existe déjà — il sera configuré sans être recréé."
+            log_warn "'$ADMIN_USER' existe déjà - il sera configuré sans être recréé."
             DO_CREATE=false
         fi
         break
@@ -673,7 +673,7 @@ collect_inputs() {
     printf '%s[?]%s Email : ' "$P" "$NC"
     read -r ADMIN_EMAIL
     if [[ -n "$ADMIN_EMAIL" ]] && [[ ! "$ADMIN_EMAIL" =~ ^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$ ]]; then
-        log_warn "Email invalide — rapports mail désactivés."
+        log_warn "Email invalide - rapports mail désactivés."
         ADMIN_EMAIL=''
     fi
     readonly ADMIN_EMAIL
@@ -727,7 +727,7 @@ collect_inputs() {
     # Persister la config
     install -d -m 0750 "$CITADEL_ROOT"
     cat > "$CITADEL_CONF" <<EOF
-# CITADEL v${CITADEL_VERSION} — configuration persistée le $(date -Iseconds)
+# CITADEL v${CITADEL_VERSION} - configuration persistée le $(date -Iseconds)
 CITADEL_VERSION="${CITADEL_VERSION}"
 ADMIN_USER="${ADMIN_USER}"
 SSH_PORT="${SSH_PORT}"
@@ -747,11 +747,11 @@ EOF
 }
 
 # ==============================================================================
-# SECTION 5 — Base système
+# SECTION 5 - Base système
 # ==============================================================================
 
 setup_base_system() {
-    log_section "PHASE 01 — BASE SYSTÈME"
+    log_section "PHASE 01 - BASE SYSTÈME"
 
     run "hostnamectl set-hostname '$NEW_HOSTNAME'"
     log_success "Hostname configuré : $NEW_HOSTNAME"
@@ -776,7 +776,7 @@ setup_base_system() {
     spinner "Mise à jour du système" $!
     wait
 
-    # Paquets CITADEL — regroupés par domaine
+    # Paquets CITADEL - regroupés par domaine
     local pkgs=(
         # Administration
         vim-enhanced git curl wget net-tools bind-utils ncdu tree
@@ -828,24 +828,24 @@ setup_base_system() {
         fi
         log_success "Swap 2 Go activé."
     else
-        log_info "Swap déjà présent — ignoré."
+        log_info "Swap déjà présent - ignoré."
     fi
 
     mark_done "base_system"
 }
 
 # ==============================================================================
-# SECTION 6 — Hardening noyau (sysctl + modules)
+# SECTION 6 - Hardening noyau (sysctl + modules)
 # ==============================================================================
 
 setup_kernel_hardening() {
-    log_section "PHASE 02 — HARDENING NOYAU"
+    log_section "PHASE 02 - HARDENING NOYAU"
 
     backup_file /etc/sysctl.d/99-citadel.conf
 
     cat > /etc/sysctl.d/99-citadel.conf <<'SYSCTL'
-# CITADEL v4.0 — sysctl hardening (CIS Level 2 / ANSSI-BP-028)
-# Ne pas modifier manuellement — géré par CITADEL
+# CITADEL v4.0 - sysctl hardening (CIS Level 2 / ANSSI-BP-028)
+# Ne pas modifier manuellement - géré par CITADEL
 
 # ---- Anti-spoofing / MITM ----
 net.ipv4.conf.all.rp_filter                 = 1
@@ -954,7 +954,7 @@ IPV6
         # Protocoles réseau legacy
         dccp sctp rds tipc n-hdlc ax25 netrom x25 rose decnet
         atm appletalk psnap p8022 p8023 ipx llc
-        # USB storage (désactivable — USBGuard prend le relais si activé)
+        # USB storage (désactivable - USBGuard prend le relais si activé)
         usb-storage
         # Firewire (vecteur DMA attack)
         firewire-core firewire-ohci firewire-sbp2
@@ -965,7 +965,7 @@ IPV6
     )
 
     {
-        echo '# CITADEL v4.0 — modules blacklistés'
+        echo '# CITADEL v4.0 - modules blacklistés'
         echo '# install <mod> /bin/true empêche le chargement même via modprobe'
         for m in "${dangerous_modules[@]}"; do
             echo "install ${m} /bin/true"
@@ -977,7 +977,7 @@ IPV6
 
     # Modules réseau explicitement chargés pour le firewall
     cat > /etc/modules-load.d/citadel.conf <<'EOF'
-# CITADEL v4.0 — modules requis
+# CITADEL v4.0 - modules requis
 br_netfilter
 ip_tables
 iptable_nat
@@ -992,15 +992,15 @@ EOF
 }
 
 # ==============================================================================
-# SECTION 7 — Points de montage sécurisés
+# SECTION 7 - Points de montage sécurisés
 # ==============================================================================
 
 setup_secure_mounts() {
-    log_section "PHASE 03 — MONTAGES SÉCURISÉS"
+    log_section "PHASE 03 - MONTAGES SÉCURISÉS"
 
     backup_file /etc/fstab
 
-    # /tmp — séparé en tmpfs avec flags restrictifs
+    # /tmp - séparé en tmpfs avec flags restrictifs
     if ! grep -qE '^\s*tmpfs\s+/tmp' /etc/fstab; then
         echo 'tmpfs /tmp tmpfs defaults,rw,noexec,nosuid,nodev,size=1G,mode=1777 0 0' >> /etc/fstab
         log_success "/tmp ajouté à fstab (tmpfs, noexec/nosuid/nodev, 1 Go)."
@@ -1033,7 +1033,7 @@ setup_secure_mounts() {
     if [ "$DRY_RUN" = false ]; then
         mount -o remount /tmp 2>/dev/null || true
         mount -o remount /dev/shm 2>/dev/null || true
-        # /proc remount peut nécessiter un reboot — on ignore les erreurs
+        # /proc remount peut nécessiter un reboot - on ignore les erreurs
         mount -o remount /proc 2>/dev/null || true
     fi
 
@@ -1041,11 +1041,11 @@ setup_secure_mounts() {
 }
 
 # ==============================================================================
-# SECTION 8 — SELinux Enforcing
+# SECTION 8 - SELinux Enforcing
 # ==============================================================================
 
 setup_selinux() {
-    log_section "PHASE 04 — SELINUX"
+    log_section "PHASE 04 - SELINUX"
 
     backup_file /etc/selinux/config
 
@@ -1053,20 +1053,20 @@ setup_selinux() {
     mode="$(getenforce 2>/dev/null || echo 'Disabled')"
 
     if [ "$mode" = 'Disabled' ]; then
-        log_warn "SELinux est Disabled dans le kernel — un reboot sera requis après cette phase."
+        log_warn "SELinux est Disabled dans le kernel - un reboot sera requis après cette phase."
         log_warn "Relabeling complet au prochain boot (peut prendre 5-15 min)."
         # Marquer pour relabel au prochain boot
         [ "$DRY_RUN" = false ] && touch /.autorelabel
     elif [ "$mode" != 'Enforcing' ]; then
         log_info "Passage de Permissive à Enforcing…"
-        run "setenforce 1" || log_warn "setenforce live impossible — effectif au reboot."
+        run "setenforce 1" || log_warn "setenforce live impossible - effectif au reboot."
     fi
 
     run "sed -i 's/^SELINUX=.*/SELINUX=enforcing/' /etc/selinux/config"
     run "sed -i 's/^SELINUXTYPE=.*/SELINUXTYPE=targeted/' /etc/selinux/config"
     log_success "SELinux configuré en Enforcing (targeted)."
 
-    # Booleans SELinux — sécurité par défaut
+    # Booleans SELinux - sécurité par défaut
     local sebool_on=(
         deny_ptrace                       # Interdit ptrace cross-process
         deny_execmem                      # Pas de mémoire exécutable partout
@@ -1097,11 +1097,11 @@ setup_selinux() {
 }
 
 # ==============================================================================
-# SECTION 9 — Utilisateurs & PAM
+# SECTION 9 - Utilisateurs & PAM
 # ==============================================================================
 
 setup_users_and_pam() {
-    log_section "PHASE 05 — UTILISATEURS & PAM"
+    log_section "PHASE 05 - UTILISATEURS & PAM"
 
     # Création / config utilisateur admin
     if [ "$DO_CREATE" = true ]; then
@@ -1139,7 +1139,7 @@ setup_users_and_pam() {
     # Politique de mots de passe
     backup_file /etc/security/pwquality.conf
     cat > /etc/security/pwquality.conf <<'PWQ'
-# CITADEL v4.0 — password quality
+# CITADEL v4.0 - password quality
 minlen      = 14
 minclass    = 4
 maxrepeat   = 3
@@ -1158,7 +1158,7 @@ PWQ
     # Faillock : verrouillage après échecs
     backup_file /etc/security/faillock.conf
     cat > /etc/security/faillock.conf <<'FL'
-# CITADEL v4.0 — account lockout
+# CITADEL v4.0 - account lockout
 deny              = 5
 fail_interval     = 900
 unlock_time       = 1800
@@ -1174,7 +1174,7 @@ FL
     if cmd_exists authselect; then
         run "authselect select sssd with-faillock --force" 2>/dev/null || \
         run "authselect select minimal with-faillock --force" 2>/dev/null || \
-        log_warn "authselect a échoué — vérification manuelle requise."
+        log_warn "authselect a échoué - vérification manuelle requise."
         run "authselect apply-changes" 2>/dev/null || true
     fi
 
@@ -1182,12 +1182,12 @@ FL
     backup_file /etc/profile
     if ! grep -q '# CITADEL umask' /etc/profile; then
         cat >> /etc/profile <<'P'
-# CITADEL umask — masque restrictif par défaut
+# CITADEL umask - masque restrictif par défaut
 umask 027
 P
     fi
 
-    # /etc/login.defs — durcir les paramètres de login
+    # /etc/login.defs - durcir les paramètres de login
     backup_file /etc/login.defs
     sed -i 's/^UMASK.*/UMASK           027/' /etc/login.defs
     sed -i 's/^PASS_MAX_DAYS.*/PASS_MAX_DAYS   90/' /etc/login.defs
@@ -1216,7 +1216,7 @@ P
 
     # Timeout inactivité shell
     cat > /etc/profile.d/citadel-timeout.sh <<'T'
-# CITADEL v4.0 — shell idle timeout (10 min)
+# CITADEL v4.0 - shell idle timeout (10 min)
 # readonly empêche l'utilisateur de le désactiver
 readonly TMOUT=600
 export TMOUT
@@ -1234,9 +1234,9 @@ T
     done
     log_success "$locked comptes système verrouillés."
 
-    # Sudoers CITADEL — correction des bugs v3
+    # Sudoers CITADEL - correction des bugs v3
     cat > /etc/sudoers.d/citadel <<'SD'
-# CITADEL v4.0 — sudo hardening
+# CITADEL v4.0 - sudo hardening
 
 # Logging
 Defaults    log_output
@@ -1286,11 +1286,11 @@ SD
 }
 
 # ==============================================================================
-# SECTION 10 — SSH Fortress
+# SECTION 10 - SSH Fortress
 # ==============================================================================
 
 setup_ssh() {
-    log_section "PHASE 06 — SSH FORTRESS"
+    log_section "PHASE 06 - SSH FORTRESS"
 
     backup_file /etc/ssh/sshd_config
 
@@ -1300,7 +1300,7 @@ setup_ssh() {
         semanage port -l 2>/dev/null | grep -q "ssh_port_t.*${SSH_PORT}$" || {
             semanage port -a -t ssh_port_t -p tcp "$SSH_PORT" 2>/dev/null || \
             semanage port -m -t ssh_port_t -p tcp "$SSH_PORT" 2>/dev/null || \
-            log_warn "semanage a échoué — vérifiez manuellement."
+            log_warn "semanage a échoué - vérifiez manuellement."
         }
     fi
 
@@ -1318,10 +1318,10 @@ setup_ssh() {
         log_warn "Pas de clé → auth par mot de passe maintenue (à désactiver ASAP)."
     fi
 
-    # Config SSHD — on utilise un heredoc non-quoté pour interpoler les variables
+    # Config SSHD - on utilise un heredoc non-quoté pour interpoler les variables
     cat > /etc/ssh/sshd_config <<SSHD
 # ==============================================================================
-# CITADEL v${CITADEL_VERSION} — sshd_config
+# CITADEL v${CITADEL_VERSION} - sshd_config
 # Conforme CIS Benchmark SSH Level 2 + Mozilla Modern
 # Généré le $(date -Iseconds)
 # ==============================================================================
@@ -1416,7 +1416,7 @@ BNR
     # MOTD dynamique post-login (correction v4 : plus de dnf check-update bloquant)
     cat > /etc/profile.d/citadel-motd.sh <<'MOTD'
 #!/usr/bin/env bash
-# CITADEL v4.0 — MOTD dynamique (affiché au login)
+# CITADEL v4.0 - MOTD dynamique (affiché au login)
 
 _c=$'\033[0;36m'; _g=$'\033[0;32m'; _y=$'\033[1;33m'
 _r=$'\033[0;31m'; _b=$'\033[1m'; _n=$'\033[0m'
@@ -1491,7 +1491,7 @@ MOTD
             [ -n "$latest_backup" ] && cp "$latest_backup" /etc/ssh/sshd_config
             return 1
         fi
-        # sshd -T permet de voir la config effective — utile pour le rapport
+        # sshd -T permet de voir la config effective - utile pour le rapport
         sshd -T 2>/dev/null > "${CITADEL_ROOT}/sshd-effective.conf" || true
         systemctl restart sshd
     fi
@@ -1502,11 +1502,11 @@ MOTD
 }
 
 # ==============================================================================
-# SECTION 11 — Firewall nftables (IPv4 + IPv6)
+# SECTION 11 - Firewall nftables (IPv4 + IPv6)
 # ==============================================================================
 
 setup_firewall() {
-    log_section "PHASE 07 — FIREWALL NFTABLES"
+    log_section "PHASE 07 - FIREWALL NFTABLES"
 
     # Arrêter firewalld au profit de nftables pur (plus de contrôle)
     run "systemctl stop firewalld" 2>/dev/null || true
@@ -1528,11 +1528,11 @@ setup_firewall() {
         admin_ip_rule="        ip saddr { ${ip_set} } tcp dport ${SSH_PORT} accept comment \"admin whitelist\""
     fi
 
-    # Génération du fichier de règles — IPv4
+    # Génération du fichier de règles - IPv4
     # Note : correction du bug v3 sur le rate-limit (meter au lieu du set mal formé)
     cat > /etc/nftables/citadel-v4.nft <<NFT
 #!/usr/sbin/nft -f
-# CITADEL v${CITADEL_VERSION} — ruleset IPv4
+# CITADEL v${CITADEL_VERSION} - ruleset IPv4
 # Généré le $(date -Iseconds)
 
 table inet citadel_filter {
@@ -1605,7 +1605,7 @@ NFT
     if [ "$ENABLE_IPV6" = true ]; then
         cat > /etc/nftables/citadel-v6.nft <<NFT6
 #!/usr/sbin/nft -f
-# CITADEL v${CITADEL_VERSION} — ruleset IPv6
+# CITADEL v${CITADEL_VERSION} - ruleset IPv6
 
 table ip6 citadel_filter6 {
 
@@ -1644,16 +1644,16 @@ NFT6
     # Fichier master nftables.conf
     {
         echo '#!/usr/sbin/nft -f'
-        echo "# CITADEL v${CITADEL_VERSION} — master ruleset"
+        echo "# CITADEL v${CITADEL_VERSION} - master ruleset"
         echo 'flush ruleset'
         echo 'include "/etc/nftables/citadel-v4.nft"'
         [ "$ENABLE_IPV6" = true ] && echo 'include "/etc/nftables/citadel-v6.nft"'
     } > /etc/sysconfig/nftables.conf
 
-    # Validation avant application — critique pour ne pas se couper l'accès
+    # Validation avant application - critique pour ne pas se couper l'accès
     if [ "$DRY_RUN" = false ]; then
         if ! nft -c -f /etc/sysconfig/nftables.conf 2>>"$LOG_FILE"; then
-            log_error "Syntaxe nftables invalide — rollback firewalld."
+            log_error "Syntaxe nftables invalide - rollback firewalld."
             systemctl unmask firewalld 2>/dev/null || true
             return 1
         fi
@@ -1667,7 +1667,7 @@ NFT6
     backup_file /etc/fail2ban/jail.local
 
     cat > /etc/fail2ban/jail.local <<F2B
-# CITADEL v${CITADEL_VERSION} — fail2ban
+# CITADEL v${CITADEL_VERSION} - fail2ban
 
 [DEFAULT]
 bantime  = 3600
@@ -1740,7 +1740,7 @@ F2B
     tcpflags    = syn
 KNOCK
         run "systemctl enable --now knockd"
-        log_success "Port-knocking activé — séquence : ${k1},${k2},${k3}"
+        log_success "Port-knocking activé - séquence : ${k1},${k2},${k3}"
         log_warn "IMPORTANT : notez la séquence de knock, elle est nécessaire pour SSH !"
         echo "KNOCK_SEQUENCE:${k1},${k2},${k3}" > "${CITADEL_ROOT}/knock-sequence.txt"
         chmod 0600 "${CITADEL_ROOT}/knock-sequence.txt"
@@ -1753,16 +1753,16 @@ KNOCK
 }
 
 # ==============================================================================
-# SECTION 12 — Auditd (règles CIS L2 / PCI-DSS / STIG)
+# SECTION 12 - Auditd (règles CIS L2 / PCI-DSS / STIG)
 # ==============================================================================
 
 setup_auditd() {
-    log_section "PHASE 08 — AUDITD"
+    log_section "PHASE 08 - AUDITD"
 
     backup_file /etc/audit/auditd.conf
 
     cat > /etc/audit/auditd.conf <<'AUD'
-# CITADEL v4.0 — auditd
+# CITADEL v4.0 - auditd
 log_file                 = /var/log/audit/audit.log
 log_format               = ENRICHED
 log_group                = root
@@ -1792,7 +1792,7 @@ AUD
     backup_file /etc/audit/rules.d/citadel.rules
 
     cat > /etc/audit/rules.d/citadel.rules <<'AR'
-## CITADEL v4.0 — audit rules (CIS L2 + PCI-DSS + STIG + ANSSI)
+## CITADEL v4.0 - audit rules (CIS L2 + PCI-DSS + STIG + ANSSI)
 
 -D
 -b 32768
@@ -1917,11 +1917,11 @@ AR
 }
 
 # ==============================================================================
-# SECTION 13 — Services systemd (désactivation / activation)
+# SECTION 13 - Services systemd (désactivation / activation)
 # ==============================================================================
 
 setup_services() {
-    log_section "PHASE 09 — SERVICES"
+    log_section "PHASE 09 - SERVICES"
 
     local services_disable=(
         avahi-daemon avahi-daemon.socket
@@ -1979,7 +1979,7 @@ setup_services() {
     backup_file /etc/chrony.conf
 
     cat > /etc/chrony.conf <<'CH'
-# CITADEL v4.0 — chrony (NTP sécurisé)
+# CITADEL v4.0 - chrony (NTP sécurisé)
 
 # Pools FR + fallback Cloudflare/Google (NTS quand dispo)
 pool 0.fr.pool.ntp.org iburst maxsources 4
@@ -2057,16 +2057,16 @@ LR
 }
 
 # ==============================================================================
-# SECTION 14 — AIDE (IDS fichiers)
+# SECTION 14 - AIDE (IDS fichiers)
 # ==============================================================================
 
 setup_aide() {
-    log_section "PHASE 10 — AIDE"
+    log_section "PHASE 10 - AIDE"
 
     backup_file /etc/aide.conf
 
     cat > /etc/aide.conf <<'AIDE'
-# CITADEL v4.0 — AIDE
+# CITADEL v4.0 - AIDE
 
 # DB
 database_in=file:/var/lib/aide/aide.db.gz
@@ -2118,7 +2118,7 @@ Log  = p+n+u+g
 /etc/nftables       Full
 /etc/fail2ban       Full
 
-# Logs — track growth (S)
+# Logs - track growth (S)
 /var/log            Log
 
 # Exclusions
@@ -2142,7 +2142,7 @@ AIDE
     # Créer le dir de log
     install -d -m 0750 /var/log/aide
 
-    # Init de la base (long — 5-15 min selon le disque)
+    # Init de la base (long - 5-15 min selon le disque)
     if [ ! -f /var/lib/aide/aide.db.gz ]; then
         log_info "Initialisation de la base AIDE (patience, ~5-15 min)…"
         run "aide --init" &
@@ -2151,8 +2151,8 @@ AIDE
         run "mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz" 2>/dev/null || true
         log_success "Base AIDE initialisée."
     else
-        log_info "Base AIDE existante — check rapide…"
-        run "aide --check" 2>/dev/null || log_warn "Écarts AIDE détectés — voir /var/log/aide/aide_report.log"
+        log_info "Base AIDE existante - check rapide…"
+        run "aide --check" 2>/dev/null || log_warn "Écarts AIDE détectés - voir /var/log/aide/aide_report.log"
     fi
 
     # Cron : v4 = check quotidien (pas hebdo) + rapport mail si ADMIN_EMAIL
@@ -2160,7 +2160,7 @@ AIDE
     [[ -n "$ADMIN_EMAIL" ]] && mail_cmd=" 2>&1 | mail -s 'AIDE daily check $(hostname)' '$ADMIN_EMAIL'"
 
     cat > /etc/cron.d/citadel-aide <<AC
-# CITADEL v4.0 — AIDE schedule
+# CITADEL v4.0 - AIDE schedule
 SHELL=/bin/bash
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 MAILTO=${ADMIN_EMAIL:-root}
@@ -2179,11 +2179,11 @@ AC
 }
 
 # ==============================================================================
-# SECTION 15 — rkhunter
+# SECTION 15 - rkhunter
 # ==============================================================================
 
 setup_rkhunter() {
-    log_section "PHASE 11 — RKHUNTER"
+    log_section "PHASE 11 - RKHUNTER"
 
     backup_file /etc/rkhunter.conf
 
@@ -2221,7 +2221,7 @@ RKH
 
     # Cron quotidien
     cat > /etc/cron.d/citadel-rkhunter <<RKCR
-# CITADEL v4.0 — rkhunter daily
+# CITADEL v4.0 - rkhunter daily
 MAILTO=${ADMIN_EMAIL:-root}
 30 2 * * * root /usr/bin/rkhunter --cronjob --update --quiet --report-warnings-only >> /var/log/rkhunter.log 2>&1
 RKCR
@@ -2233,13 +2233,13 @@ RKCR
 }
 
 # ==============================================================================
-# SECTION 16 — ClamAV
+# SECTION 16 - ClamAV
 # ==============================================================================
 
 setup_clamav() {
-    log_section "PHASE 12 — CLAMAV"
+    log_section "PHASE 12 - CLAMAV"
 
-    # Config freshclam — éviter les warnings de missing MirrorSync
+    # Config freshclam - éviter les warnings de missing MirrorSync
     if [ -f /etc/freshclam.conf ]; then
         backup_file /etc/freshclam.conf
         sed -i 's/^Example/#Example/' /etc/freshclam.conf 2>/dev/null || true
@@ -2261,7 +2261,7 @@ setup_clamav() {
 
     # Cron : scan quotidien + update 2x/jour
     cat > /etc/cron.d/citadel-clamav <<CLCR
-# CITADEL v4.0 — ClamAV
+# CITADEL v4.0 - ClamAV
 MAILTO=${ADMIN_EMAIL:-root}
 0 1 * * * root /usr/bin/clamscan -r /home /tmp /var/tmp /root --log=/var/log/clamav_daily.log --quiet --infected --exclude-dir='^/sys|^/proc|^/dev' 2>&1
 0 */12 * * * root /usr/bin/freshclam --quiet >> /var/log/freshclam.log 2>&1
@@ -2274,16 +2274,16 @@ CLCR
 }
 
 # ==============================================================================
-# SECTION 17 — GRUB hardening + kernel cmdline
+# SECTION 17 - GRUB hardening + kernel cmdline
 # ==============================================================================
 
 setup_grub() {
-    log_section "PHASE 13 — GRUB & BOOT"
+    log_section "PHASE 13 - GRUB & BOOT"
 
     backup_file /etc/default/grub
 
-    # Options kernel sécurité — v4 ajoute lockdown, module.sig_enforce, iommu
-    # Note : l1tf/mds peuvent avoir un gros impact perf — désactivables via profile
+    # Options kernel sécurité - v4 ajoute lockdown, module.sig_enforce, iommu
+    # Note : l1tf/mds peuvent avoir un gros impact perf - désactivables via profile
     local kernel_opts=(
         'quiet'
         'loglevel=3'
@@ -2306,7 +2306,7 @@ setup_grub() {
         kernel_opts+=('lockdown=integrity')
     fi
 
-    # Pour profils sévères (anssi/stig) — on désactive SMT (perte de perf)
+    # Pour profils sévères (anssi/stig) - on désactive SMT (perte de perf)
     if [[ "$COMPLIANCE_PROFILE" =~ ^(anssi|stig)$ ]]; then
         kernel_opts+=('l1tf=full,force' 'mds=full,nosmt' 'tsx=off' 'nosmt')
     fi
@@ -2353,16 +2353,16 @@ setup_grub() {
 }
 
 # ==============================================================================
-# SECTION 18 — Syslog / journald
+# SECTION 18 - Syslog / journald
 # ==============================================================================
 
 setup_syslog() {
-    log_section "PHASE 14 — JOURNALD & SYSLOG"
+    log_section "PHASE 14 - JOURNALD & SYSLOG"
 
     backup_file /etc/systemd/journald.conf
 
     cat > /etc/systemd/journald.conf <<'JD'
-# CITADEL v4.0 — journald
+# CITADEL v4.0 - journald
 [Journal]
 Storage=persistent
 Compress=yes
@@ -2402,7 +2402,7 @@ JD
     # Logwatch
     if cmd_exists logwatch; then
         cat > /etc/logwatch/conf/logwatch.conf <<LW
-# CITADEL v4.0 — logwatch
+# CITADEL v4.0 - logwatch
 Output = $([ -n "${ADMIN_EMAIL}" ] && echo 'mail' || echo 'file')
 Format = html
 MailTo = ${ADMIN_EMAIL:-root}
@@ -2415,7 +2415,7 @@ TmpDir = /var/cache/logwatch
 LW
 
         cat > /etc/cron.d/citadel-logwatch <<'LC'
-# CITADEL v4.0 — logwatch daily
+# CITADEL v4.0 - logwatch daily
 MAILTO=root
 0 7 * * * root /usr/sbin/logwatch 2>/dev/null
 LC
@@ -2426,11 +2426,11 @@ LC
 }
 
 # ==============================================================================
-# SECTION 19 — Environnement utilisateur (bashrc, aliases)
+# SECTION 19 - Environnement utilisateur (bashrc, aliases)
 # ==============================================================================
 
 setup_user_env() {
-    log_section "PHASE 15 — ENVIRONNEMENT UTILISATEUR"
+    log_section "PHASE 15 - ENVIRONNEMENT UTILISATEUR"
 
     local bashrc="/home/${ADMIN_USER}/.bashrc"
     local aliases="/home/${ADMIN_USER}/.bash_aliases"
@@ -2440,7 +2440,7 @@ setup_user_env() {
     if ! grep -q 'CITADEL v4' "$bashrc" 2>/dev/null; then
         cat >> "$bashrc" <<'BRC'
 
-# ==== CITADEL v4.0 — environnement sécurisé ====
+# ==== CITADEL v4.0 - environnement sécurisé ====
 
 # Historique enrichi
 export HISTTIMEFORMAT="%d/%m/%Y %T "
@@ -2470,7 +2470,7 @@ export LESS='-R -M -i'
 export LS_COLORS='di=1;34:ln=1;36:ex=1;32:*.tar=1;31:*.gz=1;31:*.zip=1;31:*.log=0;33'
 export GREP_OPTIONS='--color=auto'
 
-# Prompt — rouge pour root, vert pour user, avec exit code + git branch
+# Prompt - rouge pour root, vert pour user, avec exit code + git branch
 _gitbr() { git branch 2>/dev/null | sed -n 's/^\* \(.*\)/ (\1)/p' || true; }
 if [[ $EUID -eq 0 ]]; then
     PS1='\[\033[01;31m\][\u@\h]\[\033[00m\] \[\033[01;34m\]\w\[\033[01;33m\]$(_gitbr)\[\033[00m\] \[\033[01;31m\]#\[\033[00m\] '
@@ -2484,7 +2484,7 @@ BRC
     fi
 
     cat > "$aliases" <<'ALIAS'
-# CITADEL v4.0 — aliases
+# CITADEL v4.0 - aliases
 
 # --- ls & listing ---
 alias ll='ls -alFh --color=auto --group-directories-first'
@@ -2620,16 +2620,16 @@ ALIAS
 }
 
 # ==============================================================================
-# SECTION 20 — USBGuard (protection USB)
+# SECTION 20 - USBGuard (protection USB)
 # ==============================================================================
 
 setup_usbguard() {
     [ "$ENABLE_USBGUARD" = false ] && { log_info "USBGuard désactivé par flag."; return 0; }
 
-    log_section "PHASE 16 — USBGUARD"
+    log_section "PHASE 16 - USBGUARD"
 
     if ! pkg_installed usbguard; then
-        log_warn "Paquet usbguard absent — on skip cette phase."
+        log_warn "Paquet usbguard absent - on skip cette phase."
         return 0
     fi
 
@@ -2639,15 +2639,15 @@ setup_usbguard() {
         install -d -m 0750 /etc/usbguard
         usbguard generate-policy > /etc/usbguard/rules.conf 2>/dev/null || {
             # Fallback : règle vide, block everything
-            echo "# CITADEL — fallback policy, accepte rien par défaut" > /etc/usbguard/rules.conf
+            echo "# CITADEL - fallback policy, accepte rien par défaut" > /etc/usbguard/rules.conf
         }
         chmod 0600 /etc/usbguard/rules.conf
     fi
 
-    # Config principale — whitelist hubs et claviers par défaut
+    # Config principale - whitelist hubs et claviers par défaut
     backup_file /etc/usbguard/usbguard-daemon.conf
     cat > /etc/usbguard/usbguard-daemon.conf <<'UG'
-# CITADEL v4.0 — USBGuard
+# CITADEL v4.0 - USBGuard
 RuleFile=/etc/usbguard/rules.conf
 ImplicitPolicyTarget=block
 PresentDevicePolicy=apply-policy
@@ -2675,24 +2675,24 @@ IPC
 
     run "systemctl enable --now usbguard" 2>/dev/null || log_warn "Démarrage usbguard échoué (conteneur ?)"
 
-    log_success "USBGuard actif — périphériques actuels whitelistés, bloque les nouveaux."
+    log_success "USBGuard actif - périphériques actuels whitelistés, bloque les nouveaux."
 
     mark_done "usbguard"
 }
 
 # ==============================================================================
-# SECTION 21 — Process accounting (psacct / acct)
+# SECTION 21 - Process accounting (psacct / acct)
 # ==============================================================================
 
 setup_process_accounting() {
-    log_section "PHASE 17 — PROCESS ACCOUNTING"
+    log_section "PHASE 17 - PROCESS ACCOUNTING"
 
     if ! pkg_installed psacct && ! pkg_installed acct; then
-        log_warn "psacct non installé — skip."
+        log_warn "psacct non installé - skip."
         return 0
     fi
 
-    # Activer le service — nom varie selon les versions
+    # Activer le service - nom varie selon les versions
     if svc_exists psacct; then
         run "systemctl enable --now psacct"
     elif svc_exists acct; then
@@ -2717,11 +2717,11 @@ setup_process_accounting() {
 }
 
 # ==============================================================================
-# SECTION 22 — Immutabilité des fichiers critiques (chattr +i)
+# SECTION 22 - Immutabilité des fichiers critiques (chattr +i)
 # ==============================================================================
 
 setup_immutable_files() {
-    log_section "PHASE 18 — FICHIERS IMMUABLES"
+    log_section "PHASE 18 - FICHIERS IMMUABLES"
 
     # Liste des fichiers qu'on rend immuables
     # Note : +i empêche même root de modifier. Un chattr -i est requis avant toute modif légitime.
@@ -2745,7 +2745,7 @@ setup_immutable_files() {
     for f in "${critical_files[@]}"; do
         if [ -f "$f" ]; then
             if [ "$DRY_RUN" = false ]; then
-                # Sur un FS qui supporte +i (ext4, xfs) — silence sur btrfs/zfs
+                # Sur un FS qui supporte +i (ext4, xfs) - silence sur btrfs/zfs
                 chattr +i "$f" 2>/dev/null && applied=$((applied+1)) || log_debug "chattr +i échoué sur $f"
             else
                 applied=$((applied+1))
@@ -2776,15 +2776,15 @@ CE
 }
 
 # ==============================================================================
-# SECTION 23 — Bannières légales (issue, issue.net, motd, …)
+# SECTION 23 - Bannières légales (issue, issue.net, motd, …)
 # ==============================================================================
 
 setup_legal_banners() {
-    log_section "PHASE 19 — BANNIÈRES LÉGALES"
+    log_section "PHASE 19 - BANNIÈRES LÉGALES"
 
     local banner_content='
 ********************************************************************
-*                      ACCÈS RESTREINT — RESTRICTED ACCESS         *
+*                      ACCÈS RESTREINT - RESTRICTED ACCESS         *
 *                                                                  *
 *  Ce système est la propriété de son exploitant. Son accès est    *
 *  strictement réservé aux personnes explicitement autorisées.     *
@@ -2815,7 +2815,7 @@ setup_legal_banners() {
     cat > /etc/motd <<'MOTDL'
 
     ╔══════════════════════════════════════════════════════════════╗
-    ║         CITADEL — Système durci (hardening profile)          ║
+    ║         CITADEL - Système durci (hardening profile)          ║
     ║                                                              ║
     ║  - Toutes les actions sont tracées (auditd + sudo I/O)       ║
     ║  - SELinux: Enforcing | Firewall: nftables DROP              ║
@@ -2833,11 +2833,11 @@ MOTDL
 }
 
 # ==============================================================================
-# SECTION 24 — Restriction cron / at au groupe wheel
+# SECTION 24 - Restriction cron / at au groupe wheel
 # ==============================================================================
 
 setup_cron_restrictions() {
-    log_section "PHASE 20 — CRON & AT"
+    log_section "PHASE 20 - CRON & AT"
 
     # cron.allow : si ce fichier existe, SEULS les users listés peuvent utiliser crontab
     # On y met root + ADMIN_USER
@@ -2848,7 +2848,7 @@ setup_cron_restrictions() {
     chmod 0600 /etc/cron.allow
     chown root:root /etc/cron.allow
 
-    # Supprimer cron.deny (si existe) — avec cron.allow présent, cron.deny est ignoré,
+    # Supprimer cron.deny (si existe) - avec cron.allow présent, cron.deny est ignoré,
     # mais on nettoie pour éviter la confusion
     [ -f /etc/cron.deny ] && run "rm -f /etc/cron.deny"
 
@@ -2871,11 +2871,11 @@ setup_cron_restrictions() {
 }
 
 # ==============================================================================
-# SECTION 25 — Password aging (chage) pour utilisateurs existants
+# SECTION 25 - Password aging (chage) pour utilisateurs existants
 # ==============================================================================
 
 setup_password_aging() {
-    log_section "PHASE 21 — PASSWORD AGING"
+    log_section "PHASE 21 - PASSWORD AGING"
 
     # Appliquer les politiques à tous les utilisateurs humains (UID >= 1000)
     local applied=0
@@ -2887,19 +2887,19 @@ setup_password_aging() {
         fi
     done < /etc/passwd
 
-    log_success "Password aging appliqué à $applied utilisateur(s) — max 90j, min 7j, warn 14j, inactive 30j."
+    log_success "Password aging appliqué à $applied utilisateur(s) - max 90j, min 7j, warn 14j, inactive 30j."
 
     mark_done "chage"
 }
 
 # ==============================================================================
-# SECTION 26 — Désactivation kdump
+# SECTION 26 - Désactivation kdump
 # ==============================================================================
 
 disable_kdump() {
-    log_section "PHASE 22 — KDUMP"
+    log_section "PHASE 22 - KDUMP"
 
-    # kdump conserve une image mémoire en cas de crash — contient des secrets en clair
+    # kdump conserve une image mémoire en cas de crash - contient des secrets en clair
     if svc_exists kdump; then
         run "systemctl stop kdump" 2>/dev/null || true
         run "systemctl disable kdump" 2>/dev/null || true
@@ -2915,7 +2915,7 @@ disable_kdump() {
 
     # Désactiver core dumps globalement
     cat > /etc/security/limits.d/citadel-no-core.conf <<'NC'
-# CITADEL v4.0 — no core dumps
+# CITADEL v4.0 - no core dumps
 * hard core 0
 * soft core 0
 root hard core 0
@@ -2936,11 +2936,11 @@ SC
 }
 
 # ==============================================================================
-# SECTION 27 — Systemd service hardening (drop-ins)
+# SECTION 27 - Systemd service hardening (drop-ins)
 # ==============================================================================
 
 setup_systemd_sandboxing() {
-    log_section "PHASE 23 — SYSTEMD SANDBOXING"
+    log_section "PHASE 23 - SYSTEMD SANDBOXING"
 
     # Pour chaque service critique, on crée un drop-in qui impose des restrictions
     # systemd-analyze security <unit> peut être utilisé pour vérifier le score après
@@ -2953,9 +2953,9 @@ setup_systemd_sandboxing() {
         local drop_dir="/etc/systemd/system/${svc}.service.d"
         install -d -m 0755 "$drop_dir"
 
-        # Hardening commun — ajusté par service plus bas si besoin
+        # Hardening commun - ajusté par service plus bas si besoin
         cat > "${drop_dir}/citadel-hardening.conf" <<'HARDEN'
-# CITADEL v4.0 — systemd hardening drop-in
+# CITADEL v4.0 - systemd hardening drop-in
 # Vérifier le score après application : systemd-analyze security <service>
 [Service]
 NoNewPrivileges=yes
@@ -2981,7 +2981,7 @@ KeyringMode=private
 HARDEN
 
         # Ajustements spécifiques (certaines restrictions sont incompatibles
-        # avec certains services — on les relâche au cas par cas)
+        # avec certains services - on les relâche au cas par cas)
         case "$svc" in
             sshd)
                 # sshd a besoin d'écrire dans /var/log et d'ouvrir des PTY
@@ -3029,16 +3029,16 @@ EOF
 }
 
 # ==============================================================================
-# SECTION 28 — Session recording (tlog) — optionnel
+# SECTION 28 - Session recording (tlog) - optionnel
 # ==============================================================================
 
 setup_session_recording() {
     [ "$ENABLE_TLOG" = false ] && { log_info "tlog désactivé (--enable-tlog pour activer)."; return 0; }
 
-    log_section "PHASE 24 — SESSION RECORDING (tlog)"
+    log_section "PHASE 24 - SESSION RECORDING (tlog)"
 
     if ! pkg_installed tlog; then
-        log_warn "tlog non installé — skip."
+        log_warn "tlog non installé - skip."
         return 0
     fi
 
@@ -3081,7 +3081,7 @@ TLOG
     fi
 
     # Pour les membres de wheel : shell = tlog-rec-session
-    # (moins invasif que de le mettre global — root garde bash)
+    # (moins invasif que de le mettre global - root garde bash)
     local wheel_members
     wheel_members=$(getent group wheel | awk -F: '{print $4}' | tr ',' ' ')
     for user in $wheel_members; do
@@ -3093,21 +3093,21 @@ TLOG
         fi
     done
 
-    log_success "tlog actif — sessions des comptes wheel enregistrées dans journald."
+    log_success "tlog actif - sessions des comptes wheel enregistrées dans journald."
     log_info "Recherche d'une session : journalctl _COMM=tlog-rec-session"
 
     mark_done "tlog"
 }
 
 # ==============================================================================
-# SECTION 29 — DNS hardening (systemd-resolved + DoT + DNSSEC)
+# SECTION 29 - DNS hardening (systemd-resolved + DoT + DNSSEC)
 # ==============================================================================
 
 setup_dns_hardening() {
-    log_section "PHASE 25 — DNS (DoT + DNSSEC)"
+    log_section "PHASE 25 - DNS (DoT + DNSSEC)"
 
     if ! cmd_exists systemd-resolve && ! cmd_exists resolvectl; then
-        log_warn "systemd-resolved indisponible — skip DNS hardening."
+        log_warn "systemd-resolved indisponible - skip DNS hardening."
         return 0
     fi
 
@@ -3115,7 +3115,7 @@ setup_dns_hardening() {
 
     # Cloudflare + Quad9 en DNS-over-TLS, DNSSEC strict
     cat > /etc/systemd/resolved.conf <<'DNS'
-# CITADEL v4.0 — systemd-resolved
+# CITADEL v4.0 - systemd-resolved
 [Resolve]
 # Cloudflare (1.1.1.1, 1.0.0.1) + Quad9 (9.9.9.9, 149.112.112.112)
 DNS=1.1.1.1#cloudflare-dns.com 1.0.0.1#cloudflare-dns.com 9.9.9.9#dns.quad9.net 149.112.112.112#dns.quad9.net
@@ -3146,14 +3146,14 @@ DNS
 }
 
 # ==============================================================================
-# SECTION 30 — OpenSCAP compliance scan
+# SECTION 30 - OpenSCAP compliance scan
 # ==============================================================================
 
 setup_compliance_scan() {
-    log_section "PHASE 26 — OPENSCAP / COMPLIANCE"
+    log_section "PHASE 26 - OPENSCAP / COMPLIANCE"
 
     if ! cmd_exists oscap; then
-        log_warn "oscap non installé — skip."
+        log_warn "oscap non installé - skip."
         return 0
     fi
 
@@ -3168,7 +3168,7 @@ setup_compliance_scan() {
     done
 
     if [ -z "$ssg_ds" ]; then
-        log_warn "Datastream SCAP introuvable — scap-security-guide manquant ?"
+        log_warn "Datastream SCAP introuvable - scap-security-guide manquant ?"
         return 0
     fi
 
@@ -3186,7 +3186,7 @@ setup_compliance_scan() {
 
     log_info "Scan OpenSCAP avec profil $COMPLIANCE_PROFILE (peut prendre 1-5 min)…"
     if [ "$DRY_RUN" = false ]; then
-        # Le scan peut retourner non-zero si des règles échouent — c'est normal
+        # Le scan peut retourner non-zero si des règles échouent - c'est normal
         oscap xccdf eval \
             --profile "$scap_profile" \
             --results "${scan_dir}/scan-results.xml" \
@@ -3199,7 +3199,7 @@ setup_compliance_scan() {
 
     # Planifier un scan mensuel
     cat > /etc/cron.d/citadel-openscap <<CRON
-# CITADEL v4.0 — OpenSCAP monthly
+# CITADEL v4.0 - OpenSCAP monthly
 MAILTO=${ADMIN_EMAIL:-root}
 0 6 1 * * root /usr/bin/oscap xccdf eval --profile ${scap_profile} --report ${scan_dir}/monthly-\$(date +\\%Y\\%m).html ${ssg_ds} > /dev/null 2>&1
 CRON
@@ -3211,7 +3211,7 @@ CRON
 }
 
 # ==============================================================================
-# SECTION 31 — Rapport final (TXT + HTML + JSON)
+# SECTION 31 - Rapport final (TXT + HTML + JSON)
 # ==============================================================================
 
 generate_final_report() {
@@ -3229,7 +3229,7 @@ generate_final_report() {
     # --------- Rapport TXT ----------
     {
         echo "══════════════════════════════════════════════════════════════"
-        echo "  CITADEL v${CITADEL_VERSION} — RAPPORT D'INSTALLATION"
+        echo "  CITADEL v${CITADEL_VERSION} - RAPPORT D'INSTALLATION"
         echo "  Généré le $(date)"
         echo "══════════════════════════════════════════════════════════════"
         echo ""
@@ -3286,7 +3286,7 @@ generate_final_report() {
         echo "  lastcomm                        → historique commandes"
         echo ""
         echo "══════════════════════════════════════════════════════════════"
-        echo "  CITADEL v${CITADEL_VERSION} — fin de rapport"
+        echo "  CITADEL v${CITADEL_VERSION} - fin de rapport"
         echo "══════════════════════════════════════════════════════════════"
     } > "$report_txt"
 
@@ -3346,7 +3346,7 @@ generate_final_report() {
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>CITADEL v${CITADEL_VERSION} — Rapport d'installation</title>
+<title>CITADEL v${CITADEL_VERSION} - Rapport d'installation</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -3473,12 +3473,12 @@ HTMLBOT
     # Envoi par mail si demandé
     if [[ -n "$ADMIN_EMAIL" ]] && cmd_exists mail; then
         mail -s "[CITADEL v${CITADEL_VERSION}] Rapport d'installation $(hostname)" -a "$report_html" "$ADMIN_EMAIL" < "$report_txt" 2>/dev/null || \
-            log_warn "Envoi mail échoué — vérifier postfix/mailx."
+            log_warn "Envoi mail échoué - vérifier postfix/mailx."
     fi
 }
 
 # ==============================================================================
-# SECTION 32 — Bannière finale
+# SECTION 32 - Bannière finale
 # ==============================================================================
 
 display_final_banner() {
@@ -3551,7 +3551,7 @@ BNR
 }
 
 # ==============================================================================
-# SECTION 33 — Mode --restore (restauration sélective)
+# SECTION 33 - Mode --restore (restauration sélective)
 # ==============================================================================
 
 do_restore() {
@@ -3626,7 +3626,7 @@ do_restore() {
 }
 
 # ==============================================================================
-# SECTION 34 — Mode --check-only (audit ~60 contrôles)
+# SECTION 34 - Mode --check-only (audit ~60 contrôles)
 # ==============================================================================
 
 do_check_only() {
@@ -3748,9 +3748,9 @@ do_check_only() {
     if [ "$pct" -ge 90 ]; then
         printf '  %s✓  Système correctement durci.%s\n' "$G" "$NC"
     elif [ "$pct" -ge 70 ]; then
-        printf '  %s⚠  Niveau correct mais optimisable — relancez CITADEL sans --check-only.%s\n' "$Y" "$NC"
+        printf '  %s⚠  Niveau correct mais optimisable - relancez CITADEL sans --check-only.%s\n' "$Y" "$NC"
     else
-        printf '  %s✗  Niveau de sécurité insuffisant — CITADEL doit être appliqué.%s\n' "$R" "$NC"
+        printf '  %s✗  Niveau de sécurité insuffisant - CITADEL doit être appliqué.%s\n' "$R" "$NC"
     fi
     printf '\n'
 
@@ -3758,14 +3758,14 @@ do_check_only() {
 }
 
 # ==============================================================================
-# SECTION 35 — Mode --uninstall
+# SECTION 35 - Mode --uninstall
 # ==============================================================================
 
 do_uninstall() {
     log_section "MODE DÉSINSTALLATION"
 
     if [ ! -f "$STATE_FILE" ]; then
-        log_error "State DB introuvable — pas d'install CITADEL à désinstaller."
+        log_error "State DB introuvable - pas d'install CITADEL à désinstaller."
         exit 1
     fi
 
@@ -3844,7 +3844,7 @@ do_uninstall() {
 }
 
 # ==============================================================================
-# SECTION 36 — Mode --self-test
+# SECTION 36 - Mode --self-test
 # ==============================================================================
 
 do_self_test() {
@@ -3900,13 +3900,13 @@ do_self_test() {
         printf '  %s✓  Tous les tests passent.%s\n\n' "$G" "$NC"
         exit 0
     else
-        printf '  %s✗  Des tests échouent — vérifier les prérequis.%s\n\n' "$R" "$NC"
+        printf '  %s✗  Des tests échouent - vérifier les prérequis.%s\n\n' "$R" "$NC"
         exit 1
     fi
 }
 
 # ==============================================================================
-# SECTION 37 — MAIN
+# SECTION 37 - MAIN
 # ==============================================================================
 
 main() {
@@ -3914,7 +3914,7 @@ main() {
     mkdir -p "$(dirname "$LOG_FILE")"
     {
         echo "═══════════════════════════════════════════════════════════════"
-        echo "  CITADEL v${CITADEL_VERSION} — Démarrage $(date -Iseconds)"
+        echo "  CITADEL v${CITADEL_VERSION} - Démarrage $(date -Iseconds)"
         echo "  Commande : $0 $*"
         echo "  PID: $$  UID: $EUID"
         echo "═══════════════════════════════════════════════════════════════"
@@ -3935,7 +3935,7 @@ EOF
     printf '    %sULTRA HARDENING FRAMEWORK v%s%s\n' "$BOLD" "$CITADEL_VERSION" "$NC"
     printf '    %spar %s%s\n\n' "$DIM" "$CITADEL_AUTHOR" "$NC"
 
-    # Modes spéciaux en premier — pas de precheck complet nécessaire pour certains
+    # Modes spéciaux en premier - pas de precheck complet nécessaire pour certains
     if [ "$SELF_TEST" = true ]; then
         do_self_test
     fi
@@ -3956,8 +3956,8 @@ EOF
         do_uninstall
     fi
 
-    # Mode normal — hardening complet ou phases sélectionnées
-    [ "$DRY_RUN" = true ] && printf '%s  MODE DRY-RUN — aucune modification ne sera appliquée%s\n\n' "$Y" "$NC"
+    # Mode normal - hardening complet ou phases sélectionnées
+    [ "$DRY_RUN" = true ] && printf '%s  MODE DRY-RUN - aucune modification ne sera appliquée%s\n\n' "$Y" "$NC"
 
     precheck
 
@@ -3975,7 +3975,7 @@ EOF
             if [[ -n "${PHASES[$p]:-}" ]]; then
                 phases_to_run+=("$p")
             else
-                log_warn "Phase inconnue : '$p' — ignorée."
+                log_warn "Phase inconnue : '$p' - ignorée."
             fi
         done
         log_info "Exécution de ${#phases_to_run[@]} phase(s) seulement : ${phases_to_run[*]}"
