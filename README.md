@@ -2,7 +2,7 @@
 
 > **Ultra Hardening Framework - Rocky Linux 9 / RHEL 9 / AlmaLinux 9**
 
-##  CHANGELOG v3.0 (vs v2.0):
+##  CHANGELOG v3.0 (vs v2.0 ):
 >SÉCURITÉ
 >+ SSH: algorithmes crypto modernes uniquement (ChaCha20/AES-GCM/ed25519)
 >+ SSH: bannière légale + AllowUsers strict + MaxStartups + TCPKeepAlive
