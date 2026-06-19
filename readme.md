@@ -1,64 +1,68 @@
-# CITADEL : Unified Hardening Framework
+# CITADEL: Unified Hardening Framework
 
-![alt text](image.png)
+## Overview
 
-## Présentation
-**CITADEL** est une suite d'outils d'ingénierie défensive automatisée conçue pour transformer des installations standards en environnements de haute sécurité. Ce projet regroupe deux frameworks monolithiques puissants pour durcir **Windows** et **Linux (RHEL 9-based)** selon les standards internationaux les plus stricts.
+**CITADEL** is an automated defensive engineering tool suite designed to transform standard installations into high-security environments. This project bundles two powerful monolithic frameworks to harden **Windows** and **Linux (RHEL 9-based)** according to the strictest international standards.
 
-L'objectif est simple : offrir une **protection robuste**, **auditable** et **idempotente** pour les parcs hétérogènes.
+The goal is simple: provide **robust**, **auditable**, and **idempotent** protection for heterogeneous IT fleets.
 
+## Project Architecture
 
-## Architecture du Projet
+The repository is structured by environment to facilitate targeted deployment:
 
-Le dépôt est structuré par environnement pour faciliter le déploiement ciblé :
+* **`Rocky 9/`**: The Bash framework for Rocky Linux 9, RHEL 9, and AlmaLinux 9.
+* **`Windows/`**: The MSSP-oriented PowerShell framework for Windows 10, 11, and Windows Server.
 
-* **`Rocky 9/`** : Le framework Bash pour Rocky Linux 9, RHEL 9 et AlmaLinux 9.
-* **`Windows/`** : Le framework PowerShell orienté MSSP pour Windows 10, 11 et Windows Server.
+## Key Capabilities
 
-## Capacités Clés
+### CITADEL for Linux (Bash)
 
-### CITADEL pour Linux (Bash)
-Framework de ~4000 lignes optimisé pour les environnements critiques.
-* **Conformité** : Alignement CIS Benchmark L2, ANSSI BP-028 (High) et STIG.
-* **Intégrité** : Immuabilité des fichiers système via `chattr +i` et wrapper d'édition sécurisé.
-* **Réseau** : Firewall nftables dual-stack, DNS over TLS et port-knocking.
-* **Surveillance** : Auditd (50+ règles), USBGuard, et Session Recording (tlog).
-* **Modernité** : Sandboxing systemd et mitigations CPU (spectre/l1tf) via GRUB.
+A ~4000-line framework optimized for critical environments.
 
-### CITADEL pour Windows (PowerShell)
-Script monolithique de ~2600 lignes conçu pour la gestion de parc et le déploiement RMM/GPO.
-* **Standards** : ANSSI BP-028, CIS Benchmark L2 et Microsoft Security Baselines.
-* **Hygiène OS** : Désactivation des protocoles legacy (LLMNR, SMBv1), durcissement LSA et Credential Guard.
-* **Protection** : Configuration complète des 16 règles Defender ASR et Exploit Protection (ASLR, DEP).
-* **Traçabilité** : Logging triple canal (Event Log, CSV, Console) avec Run-ID unique pour chaque exécution.
-* **Sécurité Opérationnelle** : Rollback natif du registre et création automatique de points de restauration.
+* **Compliance**: Aligned with CIS Benchmark L2, ANSSI BP-028 (High), and STIG.
+* **Integrity**: System file immutability via `chattr +i` and a secure editing wrapper.
+* **Network**: Dual-stack `nftables` firewall, DNS over TLS, and port-knocking.
+* **Monitoring**: Auditd (50+ rules), USBGuard, and session recording (tlog).
+* **Modernity**: Systemd sandboxing and CPU mitigations (spectre/l1tf) via GRUB.
 
+### CITADEL for Windows (PowerShell)
 
-## Comparaison des Profils
+A ~2600-line monolithic script designed for fleet management and RMM/GPO deployment.
 
-| Caractéristique | CITADEL (Linux) | CITADEL (Windows) |
-| :--- | :--- | :--- |
-| **Langage** | Bash 4.4+ | PowerShell 5.1+ |
-| **Cible principale** | Serveurs de production | Postes de travail & Serveurs |
-| **Mode Audit** | `--check-only` (60 points) | `-Mode Audit` (CSV complet) |
-| **Idempotence** | Oui (State DB) | Oui (Lecture avant écriture) |
-| **Rollback** | Via Snapshot LVM & State DB | Via Point de restauration & .reg |
+* **Standards**: ANSSI BP-028, CIS Benchmark L2, and Microsoft Security Baselines.
+* **OS Hygiene**: Disabling of legacy protocols (LLMNR, SMBv1), LSA hardening, and Credential Guard.
+* **Protection**: Full configuration of 16 Defender ASR rules and Exploit Protection (ASLR, DEP).
+* **Traceability**: Triple-channel logging (Event Log, CSV, Console) with a unique Run-ID for every execution.
+* **Operational Security**: Native registry rollback and automatic restore point creation.
 
+## Profile Comparison
 
-## Utilisation Rapide
+| Feature | CITADEL (Linux) | CITADEL (Windows) |
+| --- | --- | --- |
+| **Language** | Bash 4.4+ | PowerShell 5.1+ |
+| **Primary Target** | Production Servers | Workstations & Servers |
+| **Audit Mode** | `--check-only` (60 points) | `-Mode Audit` (Full CSV) |
+| **Idempotence** | Yes (State DB) | Yes (Read before write) |
+| **Rollback** | Via LVM Snapshot & State DB | Via Restore Point & .reg |
+
+## Quick Start
 
 ### Linux
+
 ```bash
 sudo ./citadel.sh --compliance=anssi --enable-tlog
+
 ```
 
 ### Windows
+
 ```powershell
 .\citadel.ps1 -Mode Enforce -Profile Workstation
+
 ```
 
+## License & Liability
 
-## Licence & Responsabilité
-Ce framework est destiné à un usage interne MSSP et aux administrateurs système expérimentés. Le durcissement système est une opération critique : testez toujours ces scripts en environnement de staging avant toute application en production.
+This framework is intended for internal MSSP use and experienced system administrators. System hardening is a critical operation: always test these scripts in a staging environment before applying them to production.
 
 **Project CITADEL** - *Because "Default" is not a security policy.*
