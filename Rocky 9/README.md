@@ -709,4 +709,4 @@ Ce script modifie profondément la configuration système, réseau, noyau et de 
 L'auteur décline toute responsabilité en cas de perte d'accès, d'indisponibilité ou de dysfonctionnement suite à une utilisation incorrecte.
 
 
-*Project CITADEL v4.0 - by [4b75726169736859](https://github.com/4b75726169736859)*
+*Project CITADEL v4.0 - by [0xKuraish](https://github.com/0xKuraish)*
